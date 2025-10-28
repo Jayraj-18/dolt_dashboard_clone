@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-const Backend_URL = "http://api.d0lt.local:5000";
+const Backend_URL = process.env.VITE_PUBLIC_BACKEND_URL || 'http://api.d0lt.local:5000';
 
   useEffect(() => {
     const fetchUser = async () => {
