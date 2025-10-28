@@ -10,7 +10,7 @@ import { ArrowRight, Home, Wrench, Shield } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('homeowner');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('user');
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -56,7 +56,7 @@ const Login = () => {
                   <Label className="text-base font-semibold text-white">Select Your Role</Label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { value: 'homeowner' as UserRole, label: 'Homeowner', icon: Home },
+                      { value: 'user' as UserRole, label: 'user', icon: Home },
                       { value: 'provider' as UserRole, label: 'Provider', icon: Wrench },
                       { value: 'admin' as UserRole, label: 'Admin', icon: Shield },
                     ].map((role) => {
@@ -111,8 +111,8 @@ const Login = () => {
 
             {[
               {
-                role: 'homeowner' as UserRole,
-                title: 'Homeowner Demo',
+                role: 'user' as UserRole,
+                title: 'user Demo',
                 description: 'Browse services, book appointments, track orders',
                 icon: Home,
               },

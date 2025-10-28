@@ -84,7 +84,7 @@ const ShoppingCart = () => {
 
       // Navigate to orders page after a delay
       setTimeout(() => {
-        navigate('/homeowner/orders');
+        navigate('/user/orders');
       }, 1500);
     } catch (error) {
       toast.error('Payment processing failed. Please try again.');
@@ -105,7 +105,7 @@ const ShoppingCart = () => {
           <CardContent>
             <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
             <p className="text-muted-foreground mb-6">Start shopping to add items to your cart</p>
-            <Button onClick={() => navigate('/homeowner/marketplace')}>
+            <Button onClick={() => navigate('/user/marketplace')}>
               Continue Shopping
             </Button>
           </CardContent>
@@ -118,7 +118,7 @@ const ShoppingCart = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/homeowner/marketplace')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/user/marketplace')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Marketplace
         </Button>
@@ -247,7 +247,7 @@ const ShoppingCart = () => {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => navigate('/homeowner/marketplace')}
+                    onClick={() => navigate('/user/marketplace')}
                   >
                     Continue Shopping
                   </Button>

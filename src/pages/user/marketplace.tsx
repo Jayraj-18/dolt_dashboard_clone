@@ -65,7 +65,7 @@ const Marketplace = () => {
                   size="sm"
                   className="mt-2 w-full"
                   variant="secondary"
-                  onClick={() => navigate('/homeowner/cart')}
+                  onClick={() => navigate('/user/cart')}
                 >
                   Go to Cart
                 </Button>

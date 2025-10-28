@@ -5,18 +5,18 @@ import NotFound from './pages/NotFound';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
-// Homeowner pages
-import HomeownerDashboard from './pages/homeowner';
-import BookService from './pages/homeowner/book';
-import Marketplace from './pages/homeowner/marketplace';
-import Payments from './pages/homeowner/payments';
-import Subscription from './pages/homeowner/subscription';
-import Orders from './pages/homeowner/orders';
-import Ratings from './pages/homeowner/ratings';
-import HomeownerMessages from './pages/homeowner/messages';
-import HomeownerProfile from './pages/homeowner/profile';
-import ShoppingCart from './pages/homeowner/cart';
-import HomeownerNotifications from './pages/homeowner/notifications';
+// user pages
+import UserDashboard from './pages/user';
+import BookService from './pages/user/book';
+import Marketplace from './pages/user/marketplace';
+import Payments from './pages/user/payments';
+import Subscription from './pages/user/subscription';
+import Orders from './pages/user/orders';
+import Ratings from './pages/user/ratings';
+import UserMessages from './pages/user/messages';
+import UserProfile from './pages/user/profile';
+import ShoppingCart from './pages/user/cart';
+import UserNotifications from './pages/user/notifications';
 
 // Provider pages
 import ProviderDashboard from './pages/provider';
@@ -54,21 +54,21 @@ const routes = [
     element: <Login />,
   },
 
-  // Homeowner Dashboard
+  // user Dashboard
   {
-    path: '/homeowner',
+    path: '/user',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
-          <HomeownerDashboard />
+          <UserDashboard />
         </DashboardLayout>
       </ProtectedRoute>
     ),
   },
   {
-    path: '/homeowner/book',
+    path: '/user/book',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <BookService />
         </DashboardLayout>
@@ -76,9 +76,9 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/bookings',
+    path: '/user/bookings',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Orders />
         </DashboardLayout>
@@ -86,9 +86,9 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/marketplace',
+    path: '/user/marketplace',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Marketplace />
         </DashboardLayout>
@@ -96,9 +96,9 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/orders',
+    path: '/user/orders',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Orders />
         </DashboardLayout>
@@ -106,9 +106,9 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/payments',
+    path: '/user/payments',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Payments />
         </DashboardLayout>
@@ -116,9 +116,9 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/ratings',
+    path: '/user/ratings',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Ratings />
         </DashboardLayout>
@@ -126,9 +126,9 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/subscription',
+    path: '/user/subscription',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Subscription />
         </DashboardLayout>
@@ -136,29 +136,29 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/messages',
+    path: '/user/messages',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
-          <HomeownerMessages />
+          <UserMessages />
         </DashboardLayout>
       </ProtectedRoute>
     ),
   },
   {
-    path: '/homeowner/profile',
+    path: '/user/profile',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
-          <HomeownerProfile />
+          <UserProfile />
         </DashboardLayout>
       </ProtectedRoute>
     ),
   },
   {
-    path: '/homeowner/cart',
+    path: '/user/cart',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <ShoppingCart />
         </DashboardLayout>
@@ -166,11 +166,11 @@ const routes = [
     ),
   },
   {
-    path: '/homeowner/notifications',
+    path: '/user/notifications',
     element: (
-      <ProtectedRoute allowedRoles={['homeowner']}>
+      <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
-          <HomeownerNotifications />
+          <UserNotifications />
         </DashboardLayout>
       </ProtectedRoute>
     ),
@@ -232,7 +232,7 @@ const routes = [
     element: (
       <ProtectedRoute allowedRoles={['provider']}>
         <DashboardLayout>
-          <HomeownerMessages />
+          <UserMessages />
         </DashboardLayout>
       </ProtectedRoute>
     ),

@@ -6,7 +6,7 @@ import { Calendar, DollarSign, MessageSquare, TrendingUp, ArrowRight } from 'luc
 import { useNavigate } from 'react-router-dom';
 import { formatDistance, format } from 'date-fns';
 
-const HomeownerDashboard = () => {
+const userDashboard = () => {
   const navigate = useNavigate();
 
   // Get user's bookings
@@ -112,7 +112,7 @@ const HomeownerDashboard = () => {
                   <CardTitle>Active Bookings</CardTitle>
                   <CardDescription>Your ongoing and upcoming services</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => navigate('/homeowner/bookings')} className="text-accent border-border hover:bg-accent/10">
+                <Button variant="outline" size="sm" onClick={() => navigate('/user/bookings')} className="text-accent border-border hover:bg-accent/10">
                   View All <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -151,7 +151,7 @@ const HomeownerDashboard = () => {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No active bookings yet</p>
-                  <Button onClick={() => navigate('/homeowner/book')} variant="default">
+                  <Button onClick={() => navigate('/user/book')} variant="default">
                     Book a Service
                   </Button>
                 </div>
@@ -170,7 +170,7 @@ const HomeownerDashboard = () => {
               <Button
                 className="w-full justify-start text-white border-border hover:text-accent hover:bg-accent/10"
                 variant="outline"
-                onClick={() => navigate('/homeowner/book')}
+                onClick={() => navigate('/user/book')}
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Book a Service
@@ -178,7 +178,7 @@ const HomeownerDashboard = () => {
               <Button
                 className="w-full justify-start text-white border-border hover:text-accent hover:bg-accent/10"
                 variant="outline"
-                onClick={() => navigate('/homeowner/marketplace')}
+                onClick={() => navigate('/user/marketplace')}
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Browse Marketplace
@@ -186,7 +186,7 @@ const HomeownerDashboard = () => {
               <Button
                 className="w-full justify-start text-white border-border hover:text-accent hover:bg-accent/10"
                 variant="outline"
-                onClick={() => navigate('/homeowner/subscription')}
+                onClick={() => navigate('/user/subscription')}
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Upgrade Plan
@@ -194,7 +194,7 @@ const HomeownerDashboard = () => {
               <Button
                 className="w-full justify-start text-white border-border hover:text-accent hover:bg-accent/10"
                 variant="outline"
-                onClick={() => navigate('/homeowner/payments')}
+                onClick={() => navigate('/user/payments')}
               >
                 <DollarSign className="w-4 h-4 mr-2" />
                 Payment History
@@ -237,4 +237,4 @@ const HomeownerDashboard = () => {
   );
 };
 
-export default HomeownerDashboard;
+export default userDashboard;

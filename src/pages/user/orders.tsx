@@ -216,7 +216,7 @@ const Orders = () => {
           <CardContent className="p-12 text-center">
             <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">No orders yet</p>
-            <Button onClick={() => window.location.href = '/homeowner/marketplace'}>
+            <Button onClick={() => window.location.href = '/user/marketplace'}>
               Start Shopping
             </Button>
           </CardContent>

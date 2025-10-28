@@ -59,11 +59,17 @@ interface NavItem {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout, switchRole } = useAuth();
+  console.log('Current user:', user);
   const { cartItems } = useData();
   const navigate = useNavigate();
   const location = useLocation();
 
+  if (!user) return <div>Loading...</div>; // wait until user is loaded
+
+  
+
   if (!user) {
+    console.log('No user found, redirecting to login.');
     return null;
   }
 
@@ -77,14 +83,14 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   ];
 
   const roleSpecificItems: Record<string, NavItem[]> = {
-    homeowner: [
-      { label: 'Book Service', href: '/homeowner/book', icon: Calendar },
-      { label: 'My Bookings', href: '/homeowner/bookings', icon: LayoutGrid },
-      { label: 'Marketplace', href: '/homeowner/marketplace', icon: ShoppingCart },
-      { label: 'Orders', href: '/homeowner/orders', icon: FileText },
-      { label: 'Payments', href: '/homeowner/payments', icon: DollarSign },
-      { label: 'Ratings', href: '/homeowner/ratings', icon: Star },
-      { label: 'Subscription', href: '/homeowner/subscription', icon: Shield },
+    user: [
+      { label: 'Book Service', href: '/user/book', icon: Calendar },
+      { label: 'My Bookings', href: '/user/bookings', icon: LayoutGrid },
+      { label: 'Marketplace', href: '/user/marketplace', icon: ShoppingCart },
+      { label: 'Orders', href: '/user/orders', icon: FileText },
+      { label: 'Payments', href: '/user/payments', icon: DollarSign },
+      { label: 'Ratings', href: '/user/ratings', icon: Star },
+      { label: 'Subscription', href: '/user/subscription', icon: Shield },
     ],
     provider: [
       { label: 'My Jobs', href: '/provider/jobs', icon: LayoutGrid },
@@ -163,7 +169,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="flex items-center gap-3">
               <SidebarTrigger className="md:hidden text-white hover:text-accent transition-colors" />
               <h1 className="text-lg md:text-xl font-bold text-white hidden md:block">
-                {user.role === 'homeowner' && 'Homeowner Dashboard'}
+                {user.role === 'user' && 'user Dashboard'}
                 {user.role === 'provider' && 'Provider Dashboard'}
                 {user.role === 'admin' && 'Admin Dashboard'}
               </h1>
@@ -172,13 +178,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="flex items-center gap-3 md:gap-4">
               {/* <ThemeToggle /> */}
 
-              {/* Cart for Homeowner */}
-              {user.role === 'homeowner' && cartCount > 0 && (
+              {/* Cart for user */}
+              {user.role === 'user' && cartCount > 0 && (
                 <Button
                   variant="secondary"
                   size="sm"
                   className="gap-2 relative border-accent/50 text-accent hover:text-accent hover:bg-accent/10"
-                  onClick={() => navigate('/homeowner/cart')}
+                  onClick={() => navigate('/user/cart')}
                 >
                   <ShoppingCart className="w-4 h-4" />
                   <span className="hidden sm:inline text-xs font-semibold">Cart</span>
@@ -201,12 +207,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <DropdownMenuSeparator className="bg-border/50" />
                   <DropdownMenuItem
                     onClick={() => {
-                      switchRole('homeowner');
-                      navigate('/homeowner');
+                      switchRole('user');
+                      navigate('/user');
                     }}
                     className="text-white hover:text-accent hover:bg-accent/10 cursor-pointer"
                   >
-                    Homeowner
+                    user
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
@@ -235,7 +241,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <Button variant="ghost" size="sm" className="gap-2 text-white hover:text-accent hover:bg-accent/10">
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback className="bg-accent text-black font-bold">{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="bg-accent text-black font-bold">{user.name}</AvatarFallback>
                     </Avatar>
                     <span className="hidden sm:inline text-sm font-medium">{user.name}</span>
                   </Button>

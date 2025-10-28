@@ -1,4 +1,4 @@
-export type UserRole = 'homeowner' | 'provider' | 'admin';
+export type UserRole = 'user' | 'provider' | 'admin';
 
 export interface User {
   id: string;
@@ -13,7 +13,7 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => Promise<void>;
+ // login: (email: string, role: UserRole) => Promise<void>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
 }

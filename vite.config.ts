@@ -5,8 +5,12 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 5173,
+      allowedHosts: ['main.d0lt.local', 'dashboard.d0lt.local'],
+     host: '0.0.0.0',
+    port: 3001, // different from Next.js
+  },
+  proxy: {
+    '/api': 'http://api.doltbackend:5000',
   },
   plugins: [
     react()

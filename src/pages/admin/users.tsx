@@ -171,7 +171,7 @@ const Users = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">User Management</h1>
-        <p className="text-muted-foreground mt-1">View and manage homeowner accounts</p>
+        <p className="text-muted-foreground mt-1">View and manage user accounts</p>
       </div>
 
       {/* Stats */}

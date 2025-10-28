@@ -89,7 +89,7 @@ const ProfileSettings = () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 800));
       // Save to localStorage
-      localStorage.setItem('homeownerProfile', JSON.stringify(formData));
+      localStorage.setItem('userProfile', JSON.stringify(formData));
       toast.success('Profile saved successfully');
     } catch (error) {
       toast.error('Failed to save profile');
