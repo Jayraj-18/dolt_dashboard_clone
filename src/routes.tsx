@@ -17,7 +17,7 @@ import UserMessages from './pages/user/messages';
 import UserProfile from './pages/user/profile';
 import ShoppingCart from './pages/user/cart';
 import UserNotifications from './pages/user/notifications';
-import Bookings from './pages/user/Bookings';
+import Bookings from './pages/user/bookings';
 
 // Provider pages
 import ProviderDashboard from './pages/provider';
