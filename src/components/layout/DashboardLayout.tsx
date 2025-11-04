@@ -59,7 +59,8 @@ interface NavItem {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout, switchRole } = useAuth();
-  console.log('Current user:', user);
+
+ 
   const { cartItems } = useData();
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,7 +126,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <SidebarGroupLabel className="text-sidebar-foreground text-xs font-bold px-2 py-3 uppercase tracking-widest border-b border-accent/20">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-accent shadow-orange-glow-sm" />
-                <span className="text-accent">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
+                {/* <span className="text-accent">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span> */}
+                <span className='text-accent'>{user.fullName}</span>
               </div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -212,7 +214,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     }}
                     className="text-white hover:text-accent hover:bg-accent/10 cursor-pointer"
                   >
-                    user
+                    user 
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {

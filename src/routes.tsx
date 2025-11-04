@@ -17,6 +17,7 @@ import UserMessages from './pages/user/messages';
 import UserProfile from './pages/user/profile';
 import ShoppingCart from './pages/user/cart';
 import UserNotifications from './pages/user/notifications';
+import Bookings from './pages/user/Bookings';
 
 // Provider pages
 import ProviderDashboard from './pages/provider';
@@ -80,7 +81,7 @@ const routes = [
     element: (
       <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
-          <Orders />
+         <Bookings/>
         </DashboardLayout>
       </ProtectedRoute>
     ),

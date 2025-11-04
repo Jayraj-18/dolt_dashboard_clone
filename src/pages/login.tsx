@@ -1,24 +1,41 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { UserRole } from '../types/auth';
-import { ArrowRight, Home, Wrench, Shield } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { UserRole } from "../types/auth";
+import { ArrowRight, Home, Wrench, Shield } from "lucide-react";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('user');
+  const [email, setEmail] = useState("");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+
+    if (!email) {
+      alert("Please enter your email address.");
+      return;
+    }
+
+    try {
       await login(email, selectedRole);
-      navigate(`/${selectedRole}`);
+      navigate(`/${selectedRole}`); // only runs if login succeeds
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        "Login failed. Please check your credentials.";
+      alert(message); // 👈 show backend error message
     }
   };
 
@@ -53,12 +70,22 @@ const Login = () => {
               <form onSubmit={handleLogin} className="space-y-6">
                 {/* Role Selection */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold text-white">Select Your Role</Label>
+                  <Label className="text-base font-semibold text-white">
+                    Select Your Role
+                  </Label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { value: 'user' as UserRole, label: 'user', icon: Home },
-                      { value: 'provider' as UserRole, label: 'Provider', icon: Wrench },
-                      { value: 'admin' as UserRole, label: 'Admin', icon: Shield },
+                      { value: "user" as UserRole, label: "user", icon: Home },
+                      {
+                        value: "provider" as UserRole,
+                        label: "Provider",
+                        icon: Wrench,
+                      },
+                      {
+                        value: "admin" as UserRole,
+                        label: "Admin",
+                        icon: Shield,
+                      },
                     ].map((role) => {
                       const isSelected = selectedRole === role.value;
                       return (
@@ -66,13 +93,16 @@ const Login = () => {
                           key={role.value}
                           type="button"
                           onClick={() => setSelectedRole(role.value)}
-                          className={isSelected
-                            ? 'p-3 rounded-lg border-2 border-accent bg-accent/20 text-accent font-bold transition-all duration-200'
-                            : 'p-3 rounded-lg border-2 border-border bg-card text-white hover:border-accent/50 hover:text-accent transition-all duration-200'
+                          className={
+                            isSelected
+                              ? "p-3 rounded-lg border-2 border-accent bg-accent/20 text-accent font-bold transition-all duration-200"
+                              : "p-3 rounded-lg border-2 border-border bg-card text-white hover:border-accent/50 hover:text-accent transition-all duration-200"
                           }
                         >
                           <role.icon className="w-5 h-5 mx-auto mb-2" />
-                          <span className="text-sm font-medium">{role.label}</span>
+                          <span className="text-sm font-medium">
+                            {role.label}
+                          </span>
                         </button>
                       );
                     })}
@@ -81,7 +111,9 @@ const Login = () => {
 
                 {/* Email Input */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white">Email Address</Label>
+                  <Label htmlFor="email" className="text-white">
+                    Email Address
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -93,7 +125,12 @@ const Login = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" variant="default">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  variant="default"
+                >
                   Continue <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </form>
@@ -103,7 +140,9 @@ const Login = () => {
           {/* Quick Demo Access */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-lg font-bold text-white">Quick Demo Access</h2>
+              <h2 className="text-lg font-bold text-white">
+                Quick Demo Access
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Try the application with pre-configured accounts
               </p>
@@ -111,21 +150,21 @@ const Login = () => {
 
             {[
               {
-                role: 'user' as UserRole,
-                title: 'user Demo',
-                description: 'Browse services, book appointments, track orders',
+                role: "user" as UserRole,
+                title: "user Demo",
+                description: "Browse services, book appointments, track orders",
                 icon: Home,
               },
               {
-                role: 'provider' as UserRole,
-                title: 'Provider Demo',
-                description: 'Manage jobs, track earnings, update availability',
+                role: "provider" as UserRole,
+                title: "Provider Demo",
+                description: "Manage jobs, track earnings, update availability",
                 icon: Wrench,
               },
               {
-                role: 'admin' as UserRole,
-                title: 'Admin Demo',
-                description: 'View analytics, manage users, system oversight',
+                role: "admin" as UserRole,
+                title: "Admin Demo",
+                description: "View analytics, manage users, system oversight",
                 icon: Shield,
               },
             ].map((demo) => (
