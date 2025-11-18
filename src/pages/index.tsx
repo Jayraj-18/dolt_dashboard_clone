@@ -7,8 +7,7 @@ function Index() {
   const navigate = useNavigate();          // 🟢 hook must run always
 
   const MAIN_URL =
-    import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL ||
-    "http://localhost:3000/login";
+    import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL 
 
   // 🟢 useEffect must run before any conditional return
   useEffect(() => {
