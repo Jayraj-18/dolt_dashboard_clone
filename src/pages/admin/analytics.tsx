@@ -29,7 +29,7 @@ import { TrendingUp } from "lucide-react";
 import {
   generateRevenueData,
   generateServiceBreakdown,
-} from "../../Api/analytics.js";
+} from "../../api/analytics.js";
 
 import {
   fetchBooks,

@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "sonner";
-import { fetchCounts, fetchUsers } from "../../Api/AdminApi.js";
+import { fetchCounts, fetchUsers } from "../../api/AdminApi.js";
 
 // ✅ Fix the User interface with proper createdAt type
 interface User {

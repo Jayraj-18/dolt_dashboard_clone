@@ -30,7 +30,7 @@ import { getAllServices } from "../../api/ServiceApi.js";
 import {
   generateRevenueData,
   generateServiceBreakdown,
-} from "../../Api/analytics.js";
+} from "../../api/analytics.js";
 
 // ✅ Add type definitions
 interface CountsData {

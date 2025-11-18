@@ -6,7 +6,6 @@ import { Label } from '../../components/ui/label';
 import { Badge } from '../../components/ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { ImageUpload } from '../../components/ImageUpload';
-import { User, Mail, Phone, MapPin, Upload, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ProfileSettings = () => {
