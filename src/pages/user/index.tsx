@@ -56,7 +56,7 @@ const UserDashboard = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Active Bookings Count */}
         <Card>
           <CardHeader className="pb-3">
@@ -124,7 +124,7 @@ const UserDashboard = () => {
         </Card>
 
         {/* Membership */}
-        <Card>
+        {/* <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Premium Member
@@ -141,7 +141,7 @@ const UserDashboard = () => {
               <TrendingUp className="w-8 h-8 text-green-400/40" />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Main Content */}

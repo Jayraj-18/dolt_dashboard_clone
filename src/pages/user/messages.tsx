@@ -1,57 +1,86 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Badge } from '../../components/ui/badge';
-import { mockMessages, mockProviders } from '../../lib/mockData';
-import { Send, Search, MessageSquare } from 'lucide-react';
-import { formatDistance } from 'date-fns';
-
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import { Send, Search, MessageSquare } from "lucide-react";
+import { formatDistance } from "date-fns";
+import axios from "axios";
+import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 const Messages = () => {
-  const [selectedConversation, setSelectedConversation] = useState<string>('user_prov_1');
-  const [messageText, setMessageText] = useState('');
-  const [allMessages, setAllMessages] = useState(mockMessages);
+  // State
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messageText, setMessageText] = useState("");
+  const [allMessages, setAllMessages] = useState([]);
+  const [providers, setProviders] = useState([]);
+  const { user } = useAuth();
+  const userId = user?.id;
+  const Backend_URL =
+    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
 
-  const userMessages = allMessages;
-  const providers = mockProviders.slice(0, 3);
-
-  const getConversationMessages = (conversationId: string) => {
-    return userMessages.filter(
-      (m) => (m.senderId === conversationId || m.receiverId === conversationId)
+  // Get messages for the selected conversation
+  const getConversationMessages = (conversationId) => {
+    return allMessages.filter(
+      (m) => m.senderId === conversationId || m.receiverId === conversationId
     );
   };
+  useEffect(() => {
+    if (!userId) return; // wait until userId is available
+ 
+    const fetchConversations = async () => {
+      try {
+        const res = await axios.get(
+          `${Backend_URL}/api/messages/conversations`,
+          {
+            params: { userId },
+          }
+        );
+    
+        if (res.data.success) {
+          setProviders(res.data.providers);
+        }
+       
+      } catch (err) {
+        console.error("Error fetching conversations:", err);
+      }
+    };
 
-  const getConversationParticipant = (conversationId: string) => {
-    const senderId = userMessages.find((m) => m.receiverId === 'user_1')?.senderId;
-    return senderId === conversationId ? conversationId : conversationId;
-  };
+    fetchConversations();
+  }, [userId]); // ✅ runs whenever userId changes
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  // Send a new message
+  const handleSendMessage = (e) => {
     e.preventDefault();
-    if (messageText.trim()) {
+    if (messageText.trim() && selectedConversation) {
       const newMessage = {
         id: `msg_${Date.now()}`,
-        senderId: 'user_1',
+        senderId: "user_1",
         receiverId: selectedConversation,
         content: messageText,
         timestamp: new Date(),
         read: false,
-        senderName: 'You',
-        senderAvatar: 'https://avatar.vercel.sh/you',
+        senderName: "You",
+        senderAvatar: "https://avatar.vercel.sh/you",
       };
       setAllMessages([...allMessages, newMessage]);
-      setMessageText('');
+      setMessageText("");
     }
   };
 
   const conversationMessages = getConversationMessages(selectedConversation);
-  const unreadCount = allMessages.filter((m) => !m.read && m.receiverId === 'user_1').length;
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Messages</h1>
+        <h1 className="text-3xl font-bold text-foreground">Messages </h1>
         <p className="text-muted-foreground mt-1">
           Chat with service providers and manage conversations
         </p>
@@ -69,20 +98,15 @@ const Messages = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {providers.map((provider) => {
-              const lastMessage = getConversationMessages(provider.id).pop();
-              const hasUnread = allMessages.some(
-                (m) => m.senderId === provider.id && !m.read && m.receiverId === 'user_1'
-              );
-
-              return (
+            {providers.length > 0 ? (
+              providers.map((provider) => (
                 <div
                   key={provider.id}
                   onClick={() => setSelectedConversation(provider.id)}
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
                     selectedConversation === provider.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted'
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -92,51 +116,69 @@ const Messages = () => {
                       className="w-10 h-10 rounded-full"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{provider.name}</p>
-                      {lastMessage && (
-                        <p className="text-xs opacity-75 truncate">{lastMessage.content}</p>
-                      )}
+                      <p className="font-semibold text-base text-foreground truncate">
+                        {provider.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {provider.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                         {provider.service_title}
+                      </p>
                     </div>
-                    {hasUnread && (
-                      <div className="w-2 h-2 rounded-full bg-warning flex-shrink-0" />
-                    )}
                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No conversations yet
+              </p>
+            )}
           </CardContent>
         </Card>
 
         {/* Chat Area */}
         <Card className="md:col-span-2 flex flex-col">
-          {/* Chat Header */}
           <CardHeader className="border-b border-border pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img
-                  src={mockProviders.find((p) => p.id === selectedConversation)?.avatar}
-                  alt="Provider"
-                  className="w-10 h-10 rounded-full"
-                />
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {mockProviders.find((p) => p.id === selectedConversation)?.name}
-                  </p>
-                  <Badge variant="secondary" className="text-xs">
-                    Active
-                  </Badge>
-                </div>
+                {selectedConversation ? (
+                  <>
+                    <img
+                      src={
+                        providers.find((p) => p.id === selectedConversation)
+                          ?.avatar || "https://avatar.vercel.sh/default"
+                      }
+                      alt="Provider"
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {
+                          providers.find((p) => p.id === selectedConversation)
+                            ?.name
+                        }
+                      </p>
+                      <Badge variant="secondary" className="text-xs">
+                        Active
+                      </Badge>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">Select a chat</p>
+                )}
               </div>
             </div>
           </CardHeader>
 
-          {/* Messages Container */}
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
             {conversationMessages.length > 0 ? (
               conversationMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 ${msg.senderId === 'user_1' ? 'flex-row-reverse' : ''}`}
+                  className={`flex gap-3 ${
+                    msg.senderId === "user_1" ? "flex-row-reverse" : ""
+                  }`}
                 >
                   <img
                     src={msg.senderAvatar}
@@ -145,32 +187,36 @@ const Messages = () => {
                   />
                   <div
                     className={`flex-1 ${
-                      msg.senderId === 'user_1' ? 'flex flex-col items-end' : ''
+                      msg.senderId === "user_1" ? "flex flex-col items-end" : ""
                     }`}
                   >
                     <div
                       className={`px-4 py-2 rounded-lg max-w-xs ${
-                        msg.senderId === 'user_1'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground'
+                        msg.senderId === "user_1"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
                       }`}
                     >
                       <p className="text-sm">{msg.content}</p>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formatDistance(msg.timestamp, new Date(), { addSuffix: true })}
+                      {formatDistance(msg.timestamp, new Date(), {
+                        addSuffix: true,
+                      })}
                     </p>
                   </div>
                 </div>
               ))
             ) : (
               <div className="flex items-center justify-center h-full text-center">
-                <p className="text-muted-foreground">No messages yet. Start a conversation!</p>
+                <p className="text-muted-foreground">
+                  No messages yet. Start a conversation!
+                </p>
               </div>
             )}
           </CardContent>
 
-          {/* Message Input */}
+          {/* Input */}
           <div className="border-t border-border p-4">
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <Input
@@ -186,13 +232,14 @@ const Messages = () => {
         </Card>
       </div>
 
-      {/* Message Tips */}
+      {/* Tip */}
       <Card className="bg-muted/30">
         <CardContent className="p-6">
           <div className="flex gap-3">
             <MessageSquare className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Pro Tip:</span> Use clear and concise messages to communicate with providers. You can also attach files for reference.
+              <span className="font-semibold text-foreground">Pro Tip:</span>{" "}
+              Use clear and concise messages to communicate with providers.
             </p>
           </div>
         </CardContent>

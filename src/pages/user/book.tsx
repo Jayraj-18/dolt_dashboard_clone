@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Card,
@@ -17,12 +17,13 @@ import {
   TabsTrigger,
 } from "../../components/ui/tabs";
 import { Badge } from "../../components/ui/badge";
-import { mockServices, mockProviders } from "../../lib/mockData";
+import { mockProviders } from "../../lib/mockData";
 import { Search, Filter, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAllServices } from "../../api/ServiceApi.js";
 
-// ✅ Type Definitions
+// Types
 interface FormData {
   date: string;
   time: string;
@@ -43,6 +44,7 @@ const BookService = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState<FormData>({
     date: "",
@@ -51,8 +53,13 @@ const BookService = () => {
     notes: "",
   });
 
-  const categories = ["all", ...new Set(mockServices.map((s) => s.category))];
-  const filteredServices = mockServices.filter((service) => {
+  const [services, setServices] = useState([]);
+
+  // ✅ REPLACED mockServices → services
+  const categories = ["all", ...new Set(services.map((s) => s.category))];
+
+  // ✅ REPLACED mockServices → services
+  const filteredServices = services.filter((service) => {
     const categoryMatch =
       selectedCategory === "all" || service.category === selectedCategory;
     const searchMatch = service.name
@@ -62,15 +69,16 @@ const BookService = () => {
   });
 
   const topProviders = mockProviders.slice(0, 5);
+
+  // ✅ REPLACED mockServices → services
   const selectedServiceData = selectedService
-    ? mockServices.find((s) => s.id === selectedService)
+    ? services.find((s) => s.id === selectedService)
     : null;
 
   const BACKEND_URL =
     import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
-  console.log(user);
 
-  // ✅ Validate Form
+  // Validate Form
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     if (!formData.date) newErrors.date = "Date is required";
@@ -83,7 +91,6 @@ const BookService = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Handle Input Change
   const handleFormChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -98,7 +105,7 @@ const BookService = () => {
     }
   };
 
-  // ✅ Booking Function
+  // Booking Function
   const handleBookService = async () => {
     if (!validateForm() || !selectedServiceData) {
       toast.error("Please fill in all required fields");
@@ -111,7 +118,7 @@ const BookService = () => {
       const API_URL = `${BACKEND_URL}/api/bookings/createBooking`;
 
       const bookingData = {
-        user_id: user.id ,
+        user_id: user.id,
         service_id: selectedServiceData.id,
         service_title: selectedServiceData.name,
         service_description: selectedServiceData.description,
@@ -145,7 +152,20 @@ const BookService = () => {
     }
   };
 
-  // ✅ Render
+  // Load services from backend
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const data = await getAllServices();
+        setServices(data);
+      } catch (err) {
+        console.error("Failed to load services:", err);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
   return (
     <div className="space-y-8">
       <div>
@@ -155,7 +175,7 @@ const BookService = () => {
         </p>
       </div>
 
-      {/* 🔍 Search & Filter */}
+      {/* Search & Filter */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Find Services</CardTitle>
@@ -196,7 +216,7 @@ const BookService = () => {
         </CardContent>
       </Card>
 
-      {/* 🧩 Services Grid */}
+      {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServices.map((service) => (
           <Card
@@ -255,7 +275,7 @@ const BookService = () => {
         ))}
       </div>
 
-      {/* 📝 Service Detail Form */}
+      {/* Service Detail Form */}
       {selectedService && selectedServiceData && (
         <Card className="border-primary bg-primary/5">
           <CardHeader>
@@ -268,7 +288,7 @@ const BookService = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Date and Time */}
+            {/* Date & Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">Preferred Date *</Label>
@@ -303,7 +323,7 @@ const BookService = () => {
               <Label htmlFor="address">Service Address *</Label>
               <Input
                 id="address"
-                placeholder="123 Main St, New York, NY 10001"
+                placeholder="123 Main St, New York"
                 value={formData.address}
                 onChange={(e) => handleFormChange("address", e.target.value)}
                 className={errors.address ? "border-destructive" : ""}
@@ -318,7 +338,7 @@ const BookService = () => {
               <Label htmlFor="notes">Additional Notes</Label>
               <textarea
                 id="notes"
-                placeholder="Any special requests or details..."
+                placeholder="Any special requests..."
                 value={formData.notes}
                 onChange={(e) => handleFormChange("notes", e.target.value)}
                 className="w-full p-2 border border-border rounded-md bg-card text-foreground"
@@ -331,6 +351,7 @@ const BookService = () => {
               <p className="text-sm text-muted-foreground mb-2">
                 Service Summary
               </p>
+
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span>Service:</span>
@@ -338,16 +359,19 @@ const BookService = () => {
                     {selectedServiceData.name}
                   </span>
                 </div>
+
                 <div className="flex justify-between text-sm">
                   <span>Price:</span>
                   <span className="font-medium">
                     ${selectedServiceData.basePrice}
                   </span>
                 </div>
+
                 <div className="flex justify-between text-sm">
                   <span>Date:</span>
                   <span className="font-medium">{formData.date || "-"}</span>
                 </div>
+
                 <div className="flex justify-between text-sm border-t border-border pt-2 mt-2">
                   <span className="font-medium">Total:</span>
                   <span className="font-bold text-primary">
@@ -366,10 +390,7 @@ const BookService = () => {
               >
                 {isSubmitting ? "Booking..." : "Confirm Booking"}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setSelectedService(null)}
-              >
+              <Button variant="outline" onClick={() => setSelectedService(null)}>
                 Cancel
               </Button>
             </div>

@@ -1,8 +1,13 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { mockAnalytics, mockBookings, mockPayments } from '../../lib/mockData';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { useState, useEffect } from "react";
+
 import {
   LineChart,
   Line,
@@ -17,46 +22,171 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
-import { TrendingUp, Calendar } from 'lucide-react';
+} from "recharts";
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+import { TrendingUp } from "lucide-react";
+
+import {
+  generateRevenueData,
+  generateServiceBreakdown,
+} from "../../Api/analytics.js";
+
+import {
+  fetchBooks,
+  fetchCounts,
+  fetchserviceproviders,
+} from "../../api/AdminApi.js";
+
+const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
+
+// ✅ Add type definitions
+interface RevenueData {
+  month: string;
+  revenue: number;
+  totalRevenue: number;
+}
+
+interface ServiceData {
+  name: string;
+  value: number;
+}
+
+interface ProviderData {
+  name: string;
+  jobs: number;
+}
+
+interface CountsData {
+  acceptedCount: number;
+  cancelledCount: number;
+  completedCount: number;
+  pendingCount: number;
+  totalBookings: number;
+}
+
+interface StatsData {
+  totalBookings: number;
+  completedBookings: number;
+  completionRate: number | string; // ✅ Allow string for percentage
+  cancellationRate: number | string; // ✅ Allow string for percentage
+}
 
 const Analytics = () => {
-  const [timeRange, setTimeRange] = useState('6months');
+  const [timeRange, setTimeRange] = useState("6months");
 
-  const monthlyData = [
-    { month: 'Jan', revenue: 12400, bookings: 45, users: 22 },
-    { month: 'Feb', revenue: 15398, bookings: 52, users: 28 },
-    { month: 'Mar', revenue: 19800, bookings: 68, users: 35 },
-    { month: 'Apr', revenue: 13908, bookings: 48, users: 30 },
-    { month: 'May', revenue: 14800, bookings: 55, users: 32 },
-    { month: 'Jun', revenue: 13800, bookings: 50, users: 28 },
-  ];
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [serviceData, setServiceData] = useState<ServiceData[]>([]);
+  const [bookingData, setBookingData] = useState([]);
+  const [providerChart, setProviderChart] = useState<ProviderData[]>([]);
 
-  const totalRevenue = monthlyData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalBookings = mockBookings.length;
-  const completedBookings = mockBookings.filter((b) => b.status === 'completed').length;
-  const cancellationRate = ((mockBookings.filter((b) => b.status === 'cancelled').length / totalBookings) * 100).toFixed(1);
+  const [counts, setCounts] = useState<CountsData>({
+    acceptedCount: 0,
+    cancelledCount: 0,
+    completedCount: 0,
+    pendingCount: 0,
+    totalBookings: 0,
+  });
+
+  const [stats, setStats] = useState<StatsData>({
+    totalBookings: 0,
+    completedBookings: 0,
+    completionRate: 0,
+    cancellationRate: 0,
+  });
+
+  // Charts calculated from API
+  const monthlyData = revenueData;
+  const serviceBreakdown = serviceData;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const countsRaw = await fetchCounts();
+        const bookingsData = await fetchBooks();
+        const providersData = await fetchserviceproviders();
+
+        // 🟢 Format provider stats for chart
+        const providerStats: ProviderData[] =
+          providersData?.map((p: any) => ({
+            name: p.fullName || "Unknown",
+            jobs: Array.isArray(p.completedBookings) 
+              ? p.completedBookings.length 
+              : Number(p.completedBookings) || 0, // ✅ Handle both array and number
+          })) || [];
+
+        setProviderChart(providerStats);
+
+        // 🟢 FIX: Normalize counts no matter what shape comes
+        const countsData = {
+          totalBookings: Number(bookingsData?.totalBookings) || 0, // ✅ Convert to number
+          completedCount: Number(bookingsData?.completedCount) || 0, // ✅ Convert to number
+          cancelledCount: Number(bookingsData?.cancelledCount) || 0, // ✅ Convert to number
+        };
+
+        // 🟢 Compute stats safely
+        const total = countsData.totalBookings;
+        const completed = countsData.completedCount;
+        const cancelled = countsData.cancelledCount;
+
+        const completionRate =
+          total > 0 ? Number(((completed / total) * 100).toFixed(1)) : 0; // ✅ Convert back to number
+
+        const cancellationRate =
+          total > 0 ? Number(((cancelled / total) * 100).toFixed(1)) : 0; // ✅ Convert back to number
+
+        setStats({
+          totalBookings: total,
+          completedBookings: completed,
+          completionRate, // ✅ Now it's a number
+          cancellationRate, // ✅ Now it's a number
+        });
+
+        // 🟢 Bookings for charts
+        const {
+          accepted = [],
+          completed: comp = [],
+          pending = [],
+          cancelled: canc = [],
+        } = bookingsData.data || {};
+
+        const allBookings = [...accepted, ...comp, ...pending, ...canc];
+
+        setRevenueData(generateRevenueData(comp));
+        setServiceData(generateServiceBreakdown(allBookings));
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Analytics & Reports</h1>
-          <p className="text-muted-foreground mt-1">Platform performance metrics and trends</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Analytics & Reports
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Platform performance metrics and trends
+          </p>
         </div>
+
         <div className="flex gap-2">
-          {['7days', '30days', '6months', '1year'].map((range) => (
+          {["7days", "30days", "6months", "1year"].map((range) => (
             <Button
               key={range}
-              variant={timeRange === range ? 'default' : 'outline'}
+              variant={timeRange === range ? "default" : "outline"}
               size="sm"
               onClick={() => setTimeRange(range)}
               className="capitalize"
             >
-              {range.replace('days', 'd').replace('months', 'm').replace('year', 'y')}
+              {range
+                .replace("days", "d")
+                .replace("months", "m")
+                .replace("year", "y")}
             </Button>
           ))}
         </div>
@@ -64,44 +194,63 @@ const Analytics = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Revenue */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
-            <p className="text-xs text-green-600 mt-1">↑ 12% from last period</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">{totalBookings}</p>
-            <p className="text-xs text-muted-foreground mt-1">Across all time</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Revenue
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
-              {((completedBookings / totalBookings) * 100).toFixed(1)}%
+              ₹
+              {revenueData?.length
+                ? revenueData[revenueData.length - 1]?.totalRevenue
+                : 0}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">{completedBookings} completed</p>
+            <p className="text-xs text-green-600 mt-1">↑ 0% from last period</p>
           </CardContent>
         </Card>
 
+        {/* Total Bookings */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Cancellation Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Bookings
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">{cancellationRate}%</p>
+            <p className="text-3xl font-bold text-foreground">
+              {stats.totalBookings}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Across all time
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Completion Rate */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Completion Rate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.completionRate}%</p>
+            <p className="text-xs mt-1">{stats.completedBookings} completed</p>
+          </CardContent>
+        </Card>
+
+        {/* Cancellation Rate */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Cancellation Rate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.cancellationRate}%</p>
             <p className="text-xs text-destructive mt-1">Needs attention</p>
           </CardContent>
         </Card>
@@ -114,36 +263,34 @@ const Analytics = () => {
             <TrendingUp className="w-5 h-5" />
             Revenue Trends
           </CardTitle>
-          <CardDescription>Daily revenue over the last {timeRange}</CardDescription>
+          <CardDescription>
+            {monthlyData.length
+              ? "Monthly revenue performance"
+              : "No revenue data found"}
+          </CardDescription>
         </CardHeader>
+
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '0.5rem',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-              />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
               <Legend />
+
               <Line
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(var(--primary))"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
               />
+
               <Line
                 type="monotone"
-                dataKey="bookings"
-                stroke="hsl(var(--accent))"
+                dataKey="totalRevenue"
+                stroke="#10b981"
                 strokeWidth={2}
-                dot={{ fill: 'hsl(var(--accent))', r: 4 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -156,23 +303,23 @@ const Analytics = () => {
         <Card>
           <CardHeader>
             <CardTitle>Service Breakdown</CardTitle>
-            <CardDescription>Distribution by service type</CardDescription>
+            <CardDescription>
+              {serviceBreakdown.length ? "" : "No data found"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={mockAnalytics.serviceBreakdown}
+                  data={serviceBreakdown}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={(entry) => `${entry.name}: ${entry.value}%`}
+                  label={(entry) => `${entry.name}: ${entry.value}`}
                   outerRadius={80}
-                  fill="#8884d8"
                   dataKey="value"
                 >
-                  {COLORS.map((color, index) => (
-                    <Cell key={`cell-${index}`} fill={color} />
+                  {serviceBreakdown.map((_, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -181,100 +328,29 @@ const Analytics = () => {
           </CardContent>
         </Card>
 
-        {/* Provider Performance */}
         <Card>
           <CardHeader>
             <CardTitle>Top Providers</CardTitle>
-            <CardDescription>By completed jobs</CardDescription>
+            <CardDescription>
+              {providerChart.length ? "By completed jobs" : "No provider data found"}
+            </CardDescription>
           </CardHeader>
+
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={mockAnalytics.providerStats}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" angle={-45} textAnchor="end" height={60} />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem',
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
-                <Bar dataKey="jobs" fill="hsl(var(--primary))" />
+              <BarChart data={providerChart}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+
+                <Bar dataKey="jobs" fill="#3b82f6">
+                  {providerChart.map((_, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* User Growth */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User Growth</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '0.5rem',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="users"
-                stroke="hsl(var(--success))"
-                strokeWidth={2}
-                dot={{ fill: 'hsl(var(--success))', r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg Order Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-foreground">$142.50</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-foreground">4.6★</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Repeat Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-foreground">68%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Platform Growth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">↑ 23%</p>
           </CardContent>
         </Card>
       </div>

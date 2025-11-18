@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Bell, Check, Trash2, Archive } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -15,49 +15,7 @@ interface Notification {
 }
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'booking',
-      title: 'Booking Confirmed',
-      message: 'Your cleaning service with Sarah Johnson is confirmed for tomorrow at 10:00 AM',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-    },
-    {
-      id: '2',
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'Your payment of $80.00 for General Cleaning has been processed successfully',
-      timestamp: new Date(Date.now() - 7200000),
-      read: true,
-    },
-    {
-      id: '3',
-      type: 'message',
-      title: 'New Message',
-      message: 'Mike Chen sent you a message about your plumbing service',
-      timestamp: new Date(Date.now() - 86400000),
-      read: true,
-    },
-    {
-      id: '4',
-      type: 'system',
-      title: 'Promotion',
-      message: 'Get 20% off your next booking with code SUMMER20',
-      timestamp: new Date(Date.now() - 172800000),
-      read: true,
-    },
-    {
-      id: '5',
-      type: 'booking',
-      title: 'Provider Arrived',
-      message: 'Sarah Johnson has arrived and started your cleaning service',
-      timestamp: new Date(Date.now() - 259200000),
-      read: true,
-    },
-  ]);
-
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -128,7 +86,8 @@ const Notifications = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
           <p className="text-muted-foreground mt-1">
-            You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+            You have {unreadCount} unread notification
+            {unreadCount !== 1 ? 's' : ''}
           </p>
         </div>
         {unreadCount > 0 && (

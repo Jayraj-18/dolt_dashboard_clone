@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
-import { mockOrders, mockProducts } from '../../lib/mockData';
 import {
   Table,
   TableBody,
@@ -15,12 +14,13 @@ import {
 import { Search, Eye, RotateCcw } from 'lucide-react';
 
 const OrdersManagement = () => {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState([]); // Empty array — ready for real data
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered'>('all');
 
+  // Filtering logic
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = order.id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || order.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -28,7 +28,6 @@ const OrdersManagement = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-[#FF7A00] text-white';
       case 'processing':
         return 'bg-[#FF7A00] text-white';
       case 'shipped':
@@ -40,7 +39,8 @@ const OrdersManagement = () => {
     }
   };
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+  // Placeholder summary counts
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const pendingOrders = orders.filter((o) => o.status === 'pending').length;
   const deliveredOrders = orders.filter((o) => o.status === 'delivered').length;
 
@@ -56,31 +56,42 @@ const OrdersManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Orders
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">{orders.length}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pending
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-yellow-600">{pendingOrders}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Delivered</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Delivered
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-green-600">{deliveredOrders}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Revenue
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
@@ -145,30 +156,25 @@ const OrdersManagement = () => {
                       <TableCell>
                         <span className="font-semibold text-foreground">{order.id}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">Customer #{order.userId.split('_')[1]}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {order.items.map((item, i) => {
-                            const product = mockProducts.find((p) => p.id === item.productId);
-                            return (
-                              <div key={i} className="text-sm text-foreground">
-                                {product?.name} × {item.quantity}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <TableCell className="text-muted-foreground">{order.customer || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {order.items?.length || 0}
                       </TableCell>
                       <TableCell>
-                        <span className="font-semibold text-foreground">${order.total}</span>
+                        <span className="font-semibold text-foreground">
+                          ${order.total?.toFixed(2) || '0.00'}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1).replace('_', ' ')}
+                          {order.status
+                            ? order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1).replace('_', ' ')
+                            : 'Unknown'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {order.date.toLocaleDateString()}
+                        {order.date ? new Date(order.date).toLocaleDateString() : '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">

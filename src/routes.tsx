@@ -29,7 +29,7 @@ import AvailabilityCalendar from './pages/provider/availability';
 import RatingsAndReviews from './pages/provider/ratings';
 import SkillsAndServices from './pages/provider/skills';
 import ProviderNotifications from './pages/provider/notifications';
-
+import Messages from './pages/provider/messages';
 // Admin pages
 import AdminDashboard from './pages/admin';
 import AdminUsers from './pages/admin/users';
@@ -44,16 +44,17 @@ import SubscriptionsMonitoring from './pages/admin/subscriptions';
 import SystemAlerts from './pages/admin/system';
 import ChatMonitor from './pages/admin/chat-monitor';
 import AdminNotifications from './pages/admin/notifications';
+import ProviderMessages from './pages/provider/messages';
 
 const routes = [
   {
     path: '/',
     element: <Index />,
   },
-  {
-    path: '/login',
-    element: <Login />,
-  },
+  // {
+  //   path: '/login',
+  //   element: <Login />,
+  // },
 
   // user Dashboard
   {
@@ -188,16 +189,16 @@ const routes = [
       </ProtectedRoute>
     ),
   },
-  {
-    path: '/provider/jobs',
-    element: (
-      <ProtectedRoute allowedRoles={['provider']}>
-        <DashboardLayout>
-          <JobsList />
-        </DashboardLayout>
-      </ProtectedRoute>
-    ),
-  },
+  // {
+  //   path: '/provider/jobs',
+  //   element: (
+  //     <ProtectedRoute allowedRoles={['provider']}>
+  //       <DashboardLayout>
+  //         <JobsList />
+  //       </DashboardLayout>
+  //     </ProtectedRoute>
+  //   ),
+  // },
   {
     path: '/provider/earnings',
     element: (
@@ -233,7 +234,7 @@ const routes = [
     element: (
       <ProtectedRoute allowedRoles={['provider']}>
         <DashboardLayout>
-          <UserMessages />
+          <ProviderMessages />
         </DashboardLayout>
       </ProtectedRoute>
     ),

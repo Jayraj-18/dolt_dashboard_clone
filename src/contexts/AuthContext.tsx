@@ -27,6 +27,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const Backend_URL =
     import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+    
+    const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL || "http://localhost:3000/login";
+
 
   // ✅ Verify user session when app loads
   useEffect(() => {
@@ -36,7 +39,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const res = await axios.get(`${Backend_URL}/api/auth/verify`, {
           withCredentials: true,
         });
+ 
         setUser(res.data?.user || null);
+      
       } catch (err) {
         console.error("Failed to fetch user:", err);
         setUser(null);
@@ -188,25 +193,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ✅ Logout
   const logout = () => {
     setUser(null);
+    // console.log("Logging out, redirecting to:", MAIN_URL);
+      window.location.href = MAIN_URL;
     localStorage.removeItem("currentUser");
   };
 
   // ✅ Switch role (for testing multi-role access)
-  const switchRole = (role: UserRole) => {
-    if (user) {
-      const updatedUser = { ...user, role };
-      setUser(updatedUser);
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    }
-  };
+  // const switchRole = (role: UserRole) => {
+  //   if (user) {
+  //     const updatedUser = { ...user, role };
+  //     setUser(updatedUser);
+  //     localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+  //   }
+  // };
 
   return (
     <AuthContext.Provider
       value={{
         user,
         login,
+        setUser,
         logout,
-        switchRole,
+      // switchRole,
+      loading,
         isLoading,
         bookings,
         fetchBookings,
@@ -215,7 +224,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         handleAccept,
         providerBookings,
         loadingProviderBookings,
-        loading,
+     
         fetchBookingsProviders,
         handleComplete
       }}

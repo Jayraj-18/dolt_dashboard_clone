@@ -1,43 +1,29 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { mockOrders, mockProducts } from '../../lib/mockData';
-import { Package, Truck, CheckCircle2, Download, MessageSquare } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Package, Truck, CheckCircle2, Download, MessageSquare } from "lucide-react";
+import { format } from "date-fns";
 
 const Orders = () => {
-  const userOrders = mockOrders.filter((o) => o.userId === 'user_1');
+  const [orders, setOrders] = useState<any[]>([]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered':
-        return 'bg-[#22C55E] text-white';
-      case 'shipped':
-        return 'bg-[#FF7A00] text-white';
-      case 'processing':
-        return 'bg-[#FF7A00] text-white';
-      case 'pending':
-        return 'bg-[#A0A0A0] text-white';
+      case "delivered":
+        return "bg-[#22C55E] text-white";
+      case "shipped":
+      case "processing":
+        return "bg-[#FF7A00] text-white";
+      case "pending":
+        return "bg-[#A0A0A0] text-white";
       default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return <CheckCircle2 className="w-5 h-5 text-success" />;
-      case 'shipped':
-        return <Truck className="w-5 h-5 text-primary" />;
-      case 'processing':
-        return <Package className="w-5 h-5 text-warning" />;
-      default:
-        return <Package className="w-5 h-5 text-muted-foreground" />;
+        return "bg-muted text-muted-foreground";
     }
   };
 
   const getStatusStep = (status: string) => {
-    const steps = ['pending', 'processing', 'shipped', 'delivered'];
+    const steps = ["pending", "processing", "shipped", "delivered"];
     return steps.indexOf(status);
   };
 
@@ -56,7 +42,7 @@ const Orders = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">{userOrders.length}</p>
+            <p className="text-3xl font-bold text-foreground">{orders.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -65,7 +51,7 @@ const Orders = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-success">
-              {userOrders.filter((o) => o.status === 'delivered').length}
+              {orders.filter((o) => o.status === "delivered").length}
             </p>
           </CardContent>
         </Card>
@@ -75,7 +61,7 @@ const Orders = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-primary">
-              {userOrders.filter((o) => o.status === 'shipped').length}
+              {orders.filter((o) => o.status === "shipped").length}
             </p>
           </CardContent>
         </Card>
@@ -85,7 +71,7 @@ const Orders = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
-              ${userOrders.reduce((sum, o) => sum + o.total, 0)}
+              ${orders.reduce((sum, o) => sum + (o.total || 0), 0)}
             </p>
           </CardContent>
         </Card>
@@ -93,7 +79,7 @@ const Orders = () => {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {userOrders.map((order) => {
+        {orders.map((order) => {
           const statusStep = getStatusStep(order.status);
 
           return (
@@ -102,10 +88,14 @@ const Orders = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">Order {order.id}</CardTitle>
-                    <CardDescription>{format(order.date, 'MMM d, yyyy')}</CardDescription>
+                    <CardDescription>
+                      {order.date ? format(new Date(order.date), "MMM d, yyyy") : "—"}
+                    </CardDescription>
                   </div>
                   <Badge className={getStatusColor(order.status)}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    {order.status
+                      ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
+                      : "Unknown"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -115,22 +105,21 @@ const Orders = () => {
                 <div>
                   <h4 className="font-semibold text-foreground mb-3">Order Items</h4>
                   <div className="space-y-2">
-                    {order.items.map((item, idx) => {
-                      const product = mockProducts.find((p) => p.id === item.productId);
-                      return (
-                        <div key={idx} className="flex items-center justify-between text-sm">
-                          <span className="text-foreground">{product?.name || 'Product'}</span>
-                          <div className="text-right">
-                            <span className="text-muted-foreground">x{item.quantity}</span>
-                            <span className="text-foreground font-medium ml-4">${item.price}</span>
-                          </div>
+                    {(order.items || []).map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">{item.name || "Product"}</span>
+                        <div className="text-right">
+                          <span className="text-muted-foreground">x{item.quantity || 1}</span>
+                          <span className="text-foreground font-medium ml-4">
+                            ${item.price || 0}
+                          </span>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                   <div className="border-t border-border mt-3 pt-3 flex justify-between font-semibold">
                     <span>Total</span>
-                    <span>${order.total}</span>
+                    <span>${order.total || 0}</span>
                   </div>
                 </div>
 
@@ -138,13 +127,13 @@ const Orders = () => {
                 <div>
                   <h4 className="font-semibold text-foreground mb-4">Delivery Status</h4>
                   <div className="flex items-center justify-between">
-                    {['Order Placed', 'Processing', 'Shipped', 'Delivered'].map((step, idx) => (
+                    {["Order Placed", "Processing", "Shipped", "Delivered"].map((step, idx) => (
                       <div key={idx} className="flex flex-col items-center flex-1">
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center ${
                             idx <= statusStep
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground'
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {idx < statusStep ? (
@@ -157,7 +146,7 @@ const Orders = () => {
                         {idx !== 3 && (
                           <div
                             className={`flex-1 h-1 mx-1 mt-3 ${
-                              idx < statusStep ? 'bg-primary' : 'bg-muted'
+                              idx < statusStep ? "bg-primary" : "bg-muted"
                             }`}
                           />
                         )}
@@ -172,18 +161,24 @@ const Orders = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Order Placed</span>
-                      <span className="text-foreground">{format(order.date, 'MMM d, yyyy')}</span>
+                      <span className="text-foreground">
+                        {order.date ? format(new Date(order.date), "MMM d, yyyy") : "—"}
+                      </span>
                     </div>
                     {order.shippingDate && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Shipped</span>
-                        <span className="text-foreground">{format(order.shippingDate, 'MMM d, yyyy')}</span>
+                        <span className="text-foreground">
+                          {format(new Date(order.shippingDate), "MMM d, yyyy")}
+                        </span>
                       </div>
                     )}
                     {order.deliveryDate && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Delivered</span>
-                        <span className="text-foreground">{format(order.deliveryDate, 'MMM d, yyyy')}</span>
+                        <span className="text-foreground">
+                          {format(new Date(order.deliveryDate), "MMM d, yyyy")}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -199,7 +194,7 @@ const Orders = () => {
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Support
                   </Button>
-                  {order.status === 'delivered' && (
+                  {order.status === "delivered" && (
                     <Button className="flex-1" size="sm">
                       Leave Review
                     </Button>
@@ -211,12 +206,12 @@ const Orders = () => {
         })}
       </div>
 
-      {userOrders.length === 0 && (
+      {orders.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
             <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">No orders yet</p>
-            <Button onClick={() => window.location.href = '/user/marketplace'}>
+            <Button onClick={() => (window.location.href = "/user/marketplace")}>
               Start Shopping
             </Button>
           </CardContent>

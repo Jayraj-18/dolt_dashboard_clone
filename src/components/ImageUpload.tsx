@@ -161,14 +161,14 @@ export const ImageUpload = ({
       </div>
 
       {/* Alternative: Google OAuth Mock */}
-      <Button variant="outline" className="w-full" disabled={isLoading}>
+      {/* <Button variant="outline" className="w-full" disabled={isLoading}>
         <img
           src="https://www.gstatic.com/images/branding/product/1x/goog_logo_40dp.png"
           alt="Google"
           className="w-4 h-4 mr-2"
         />
         Connect Google (Mock)
-      </Button>
+      </Button> */}
     </div>
   );
 };

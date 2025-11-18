@@ -1,37 +1,60 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { mockMessages } from '../../lib/mockData';
 import { Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface Message {
+
+interface Conversation {
   id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  timestamp: Date;
-  read: boolean;
-  senderName: string;
-  senderAvatar: string;
+  name: string;
+  avatar: string;
+  service_title: string;
+  email: string;
 }
 
 const ProviderMessages = () => {
+  const { user } = useAuth();
+
+  const [users, setUsers] = useState<Conversation[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Group messages by conversation
-  const conversations = Array.from(
-    new Map(
-      messages.map((msg) => [msg.senderId === 'prov_1' ? msg.receiverId : msg.senderId, msg])
-    ).values()
-  );
+    // console.log(user)
+  const providerId = user?.id;
+  // console.log("Provider ID:", providerId);
 
-  const filteredConversations = conversations.filter((conv) =>
-    conv.senderName.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const Backend_URL =
+    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+
+  // 🧩 Fetch users with accepted/completed bookings
+  useEffect(() => {
+       if (!providerId) return;
+    const fetchConversations = async () => {
+      // console.log(providerId)
+      try {
+        const res = await axios.get(`${Backend_URL}/api/messages/User-conversations`,{
+          params: { providerId },
+          
+        });
+        if (res.data.success) {
+          setUsers(res.data.users);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load conversations");
+      }
+    };
+    fetchConversations();
+  }, [providerId]);
+
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSendMessage = () => {
@@ -40,41 +63,31 @@ const ProviderMessages = () => {
       return;
     }
 
-    const newMessage: Message = {
-      id: `msg_${Date.now()}`,
-      senderId: 'prov_1',
-      receiverId: selectedChat,
-      content: messageInput,
-      timestamp: new Date(),
-      read: true,
-      senderName: 'You',
-      senderAvatar: 'https://avatar.vercel.sh/provider',
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-    setMessageInput('');
+    // Send message logic to backend (not implemented yet)
     toast.success('Message sent');
+    setMessageInput('');
   };
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Messages</h1>
-        <p className="text-muted-foreground mt-1">Chat with customers about their service requests</p>
+        <h1 className="text-3xl font-bold text-foreground">Messages </h1>
+        <p className="text-muted-foreground mt-1">
+          Chat with customers who have accepted your services
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-        {/* Conversations List */}
+        {/* Users List */}
         <Card className="lg:col-span-1 flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg">Conversations</CardTitle>
+            <CardTitle className="text-lg">Conversations </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search messages..."
+                placeholder="Search users..."
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -82,27 +95,22 @@ const ProviderMessages = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2">
-              {filteredConversations.map((conv) => (
+              {filteredUsers.map((user) => (
                 <div
-                  key={conv.senderId}
-                  onClick={() => setSelectedChat(conv.senderId === 'prov_1' ? conv.receiverId : conv.senderId)}
+                  key={user.id}
+                  onClick={() => setSelectedChat(user.id)}
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedChat === (conv.senderId === 'prov_1' ? conv.receiverId : conv.senderId)
+                    selectedChat === user.id
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-muted border border-border'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <img
-                      src={conv.senderAvatar}
-                      alt={conv.senderName}
-                      className="w-10 h-10 rounded-full"
-                    />
+                    <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">{conv.senderName}</p>
-                      <p className="text-xs opacity-75 truncate">{conv.content}</p>
+                      <p className="font-semibold text-sm">{user.name}</p>
+                      <p className="text-xs opacity-75 truncate">{user.service_title}</p>
                     </div>
-                    {!conv.read && <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0 mt-2" />}
                   </div>
                 </div>
               ))}
@@ -110,46 +118,21 @@ const ProviderMessages = () => {
           </CardContent>
         </Card>
 
-        {/* Chat Area */}
+        {/* Chat Window */}
         <Card className="lg:col-span-2 flex flex-col">
           {selectedChat ? (
             <>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {conversations.find((c) => c.senderId === selectedChat || c.receiverId === selectedChat)?.senderName}
+                  {users.find((u) => u.id === selectedChat)?.name}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-4">
-                  {messages
-                    .filter(
-                      (msg) =>
-                        (msg.senderId === 'prov_1' && msg.receiverId === selectedChat) ||
-                        (msg.receiverId === 'prov_1' && msg.senderId === selectedChat)
-                    )
-                    .map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.senderId === 'prov_1' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-xs px-4 py-2 rounded-lg ${
-                            msg.senderId === 'prov_1'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-foreground'
-                          }`}
-                        >
-                          <p className="text-sm">{msg.content}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {msg.timestamp.toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                {/* Chat messages will go here */}
+                <div className="flex-1 overflow-y-auto flex items-center justify-center text-muted-foreground">
+                  Start messaging with {users.find((u) => u.id === selectedChat)?.name}
                 </div>
 
-                {/* Message Input */}
                 <div className="flex gap-2 border-t border-border pt-4">
                   <Input
                     placeholder="Type a message..."

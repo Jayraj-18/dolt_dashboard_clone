@@ -22,4 +22,5 @@ export interface Booking {
   created_at?: string;
   updated_at?: string;
   completed_date?: string | null;
+  totalBookings?: number;
 }
