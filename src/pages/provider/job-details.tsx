@@ -31,7 +31,7 @@ const job: Job =
 
   const handleStatusChange = (newStatus: string) => {
     setJobStatus(newStatus);
-    // console.log(`Job status updated to: ${newStatus}`);
+  
   };
 
   return (

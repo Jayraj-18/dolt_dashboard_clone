@@ -36,7 +36,7 @@ const [monthlyData, setMonthlyData] = useState([]);
 
   const { user } = useAuth();
   const Backend_URL =
-  import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
+  import.meta.env.VITE_PUBLIC_BACKEND_URL 
 
 
 useEffect(() => {
@@ -48,7 +48,7 @@ useEffect(() => {
         providerId: user.id,
       });
 
-      // console.log("Completed Bookings:", res.data);
+      
 
       setProviderBookings(res.data.bookings);
       setTotalEarnings(res.data.totalEarnings);

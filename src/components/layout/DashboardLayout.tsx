@@ -60,16 +60,16 @@ interface NavItem {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout, setUser } = useAuth();
  
-const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL || "http://localhost:3000/login";
+const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL 
 
-  const { cartItems } = useData();
+   const { cartItems = [] } = useData();
   const navigate = useNavigate();
   const location = useLocation();
 
   if (!user) return <div>Loading...</div>; // wait until user is loaded
 
   if (!user) {
-    // console.log("No user found, redirecting to login.");
+ 
     return null;
   }
 

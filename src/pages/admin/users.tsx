@@ -81,7 +81,7 @@ const Users = () => {
       try {
         const countData = await fetchCounts();
         const userList = await fetchUsers();
-        // console.log("Fetched Users:", userList);
+
 
         setCounts(countData);
         setUsers(userList);

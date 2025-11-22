@@ -24,9 +24,9 @@ const ProviderMessages = () => {
   const [messageInput, setMessageInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-    // console.log(user)
+   
   const providerId = user?.id;
-  // console.log("Provider ID:", providerId);
+
 
 
     const Backend_URL =
@@ -36,7 +36,7 @@ const ProviderMessages = () => {
   useEffect(() => {
        if (!providerId) return;
     const fetchConversations = async () => {
-      // console.log(providerId)
+
       try {
         const res = await axios.get(`${Backend_URL}/api/messages/User-conversations`,{
           params: { providerId },

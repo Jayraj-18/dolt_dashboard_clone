@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const Backend_URL =
     import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
     
-    const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL || "http://localhost:3000/login";
+    const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
 
 
   // ✅ Verify user session when app loads
@@ -193,7 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ✅ Logout
   const logout = () => {
     setUser(null);
-    // console.log("Logging out, redirecting to:", MAIN_URL);
+   
       window.location.href = MAIN_URL;
     localStorage.removeItem("currentUser");
   };

@@ -1,6 +1,6 @@
 // ✅ api/ProductApi.js
 import axios from "axios";
-const Backend_URL = "http://localhost:5000"; // adjust to your backend URL
+const Backend_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL 
 
 
 export const addProduct = async (productData) => {

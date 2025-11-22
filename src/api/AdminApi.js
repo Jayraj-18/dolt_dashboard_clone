@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const Backend_URL =
-  import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
+  import.meta.env.VITE_PUBLIC_BACKEND_URL 
 
 export const fetchCounts = async () => {
   try {

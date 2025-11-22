@@ -171,19 +171,19 @@ const ProviderProfile = () => {
   };
 
   const handleSave = async () => {
-    // console.log("Saving form data:", formData);
+
     if (!validateForm()) {
       toast.error("Please fix all errors before saving");
-      // console.log("Validation errors:", errors);
+
       return;
     }
 
     setIsSaving(true);
 
     try {
-      // console.log(formData);
+    
       const res = await updateProviderProfile(formData);
-      // console.log("Update response:", res);
+      
 
       // ✅ Fetch fresh data from backend after successful update
       const updatedData = await getFullUserDetails();
