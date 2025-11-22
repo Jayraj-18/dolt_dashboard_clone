@@ -22,12 +22,20 @@ const Bookings = () => {
   const [canceling, setCanceling] = useState<string | null>(null);
 
   // ✅ Format date safely
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "—";
-    const parsedDate = new Date(dateString);
-    if (isNaN(parsedDate.getTime())) return "—";
-    return format(parsedDate, "MMM d, yyyy");
-  };
+// Format Firestore Timestamp
+const formatDate = (timestamp: any) => {
+  if (!timestamp?._seconds) return "—";
+
+  const date = new Date(timestamp._seconds * 1000);
+  return date.toLocaleString("en-IN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 
   // ✅ Status badge colors
   const getStatusColor = (status: string) => {
@@ -64,6 +72,9 @@ const Bookings = () => {
       setFilteredBookings(bookings.filter((b) => b.status === activeFilter));
     }
   }, [bookings, activeFilter]);
+
+
+
 
   // ✅ Cancel booking handler
   const handleCancelBooking = async (bookingId: string) => {
@@ -106,6 +117,9 @@ const Bookings = () => {
       key: "cancelled",
     },
   ];
+
+  
+
 
   // ✅ Loading
   if (loadingBookings) {
