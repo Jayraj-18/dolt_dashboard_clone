@@ -191,12 +191,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
   // ✅ Logout
-  const logout = () => {
-    setUser(null);
-   
-      window.location.href = MAIN_URL;
-    localStorage.removeItem("currentUser");
-  };
+ const logout = async () => {
+  try {
+    await axios.post(
+      `${Backend_URL}/api/auth/logout`,
+      {},
+      { withCredentials: true } // required for cookie removal
+    );
+  } catch (err) {
+    console.error("Logout request failed:", err);
+  }
+
+  setUser(null);
+  localStorage.removeItem("currentUser");
+  window.location.href = MAIN_URL;
+};
+
 
   // ✅ Switch role (for testing multi-role access)
   // const switchRole = (role: UserRole) => {
