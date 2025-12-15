@@ -151,7 +151,7 @@ const handleTimeChange = (time: string) => {
         scheduled_date: `${formData.date}T${formData.time}:00`,
         address: formData.address,
         notes: formData.notes,
-        total_amount: selectedServiceData.basePrice,
+        total_amount: selectedServiceData.base_price, // otherwise, returns 0 ? check this pls
         currency: "USD",
         user_name: user.fullName,
         user_email: user.email,

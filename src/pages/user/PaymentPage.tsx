@@ -30,21 +30,28 @@ const PaymentPage = () => {
         const fetchBooking = async () => {
             try {
                 if (!bookingId) return;
-                const res = await fetch(`${BACKEND_URL}/api/bookings/getBooking/${bookingId}`); // Corrected route
+                const res = await fetch(`${BACKEND_URL}/api/bookings/getBooking/${bookingId}`);
+
                 if (res.ok) {
                     const data = await res.json();
+
                     if (data.success) {
                         setBooking(data.data);
+                    } else {
+                        console.error("Booking fetch unsuccessful:", data.message);
                     }
+                } else {
+                    console.error("Booking fetch failed status:", res.status);
                 }
             } catch (e) {
-                console.error("Failed to fetch booking", e);
+                console.error("Failed to fetch booking:", e);
             }
         };
         fetchBooking();
     }, [bookingId]);
 
-    const amount = Number(booking.total_amount);
+    console.log("Render Booking State:", booking);
+    const amount = booking ? Number(booking.total_amount || 0) : 0;
 
     const handlePaymentResult = (result: any) => {
         setPaymentResult(result);
