@@ -44,7 +44,7 @@ const BookService = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState<FormData>({
     date: "",
@@ -164,7 +164,14 @@ const handleTimeChange = (time: string) => {
         setSelectedService(null);
         setFormData({ date: "", time: "", address: "", notes: "" });
         setErrors({});
-        window.location.href = "/user/bookings";
+        // Redirect to payment page instead of bookings list
+        const bookingId = response.data.booking?.bookingId || response.data.booking?.id;
+        if (bookingId) {
+          window.location.href = `/user/payment/${bookingId}`;
+        } else {
+          console.error("Booking ID not found in response", response.data);
+          window.location.href = "/user/bookings";
+        }
       } else {
         toast.error(response.data.message || "Failed to create booking");
       }

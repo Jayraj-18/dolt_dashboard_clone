@@ -18,6 +18,7 @@ import UserProfile from './pages/user/profile';
 import ShoppingCart from './pages/user/cart';
 import UserNotifications from './pages/user/notifications';
 import Bookings from './pages/user/bookings';
+import PaymentPage from './pages/user/PaymentPage';
 
 // Provider pages
 import ProviderDashboard from './pages/provider';
@@ -30,6 +31,7 @@ import RatingsAndReviews from './pages/provider/ratings';
 import SkillsAndServices from './pages/provider/skills';
 import ProviderNotifications from './pages/provider/notifications';
 import Messages from './pages/provider/messages';
+import PaymentSettings from './pages/provider/payment-settings';
 // Admin pages
 import AdminDashboard from './pages/admin';
 import AdminUsers from './pages/admin/users';
@@ -113,6 +115,16 @@ const routes = [
       <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
           <Payments />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/user/payment/:bookingId',
+    element: (
+      <ProtectedRoute allowedRoles={['user']}>
+        <DashboardLayout>
+          <PaymentPage />
         </DashboardLayout>
       </ProtectedRoute>
     ),
@@ -275,6 +287,16 @@ const routes = [
       <ProtectedRoute allowedRoles={['provider']}>
         <DashboardLayout>
           <ProviderNotifications />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/provider/payment-settings',
+    element: (
+      <ProtectedRoute allowedRoles={['provider']}>
+        <DashboardLayout>
+          <PaymentSettings />
         </DashboardLayout>
       </ProtectedRoute>
     ),
