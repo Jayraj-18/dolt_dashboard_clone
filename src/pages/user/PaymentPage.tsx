@@ -48,7 +48,7 @@ const PaymentPage = () => {
             }
         };
         fetchBooking();
-    }, [bookingId]);
+    }, [bookingId, navigate]);
 
     console.log("Render Booking State:", booking);
     const amount = booking ? Number(booking.total_amount || 0) : 0;
@@ -171,12 +171,12 @@ const PaymentPage = () => {
                                     ) : (
                                         <CardPaymentBrick
                                             amount={amount}
-                                            // Using hardcoded Provider ID for testing as requested
                                             providerId={booking?.provider_id}
+                                            userId={booking?.user_id}
                                             payerEmail={booking?.user_email}
                                             items={[
                                                 {
-                                                    id: bookingId,
+                                                    id: bookingId === 'pending' ? 'pending_booking' : bookingId,
                                                     title: booking?.service_title,
                                                     description: booking?.service_description,
                                                     quantity: 1,

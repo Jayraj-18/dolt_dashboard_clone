@@ -141,8 +141,6 @@ const handleTimeChange = (time: string) => {
     setIsSubmitting(true);
 
     try {
-      const API_URL = `${BACKEND_URL}/api/bookings/createBooking`;
-
       const bookingData = {
         user_id: user.id,
         service_id: selectedServiceData.id,
@@ -151,35 +149,27 @@ const handleTimeChange = (time: string) => {
         scheduled_date: `${formData.date}T${formData.time}:00`,
         address: formData.address,
         notes: formData.notes,
-        total_amount: selectedServiceData.base_price, // otherwise, returns 0 ? check this pls
+        total_amount: selectedServiceData.basePrice,
         currency: "USD",
         user_name: user.fullName,
         user_email: user.email,
+        status: "pending_payment"
       };
 
-      const response = await axios.post(API_URL, bookingData);
+      // Create booking immediately in DB
+      const response = await axios.post(`${BACKEND_URL}/api/bookings/createBooking`, bookingData);
 
       if (response.status === 201) {
-        toast.success("✅ Booking created successfully!");
-        setSelectedService(null);
-        setFormData({ date: "", time: "", address: "", notes: "" });
-        setErrors({});
-        // Redirect to payment page instead of bookings list
-        const bookingId = response.data.booking?.bookingId || response.data.booking?.id;
-        if (bookingId) {
-          window.location.href = `/user/payment/${bookingId}`;
-        } else {
-          console.error("Booking ID not found in response", response.data);
-          window.location.href = "/user/bookings";
-        }
-      } else {
-        toast.error(response.data.message || "Failed to create booking");
+        const newBookingId = response.data.booking.bookingId;
+        toast.success("Booking initialized. Proceeding to payment...");
+
+        // Redirect to payment page with REAL booking ID
+        window.location.href = `/user/payment/${newBookingId}`;
       }
+
     } catch (error: any) {
-      console.error("Booking error:", error);
-      toast.error(
-        error.response?.data?.message || "Server error while creating booking"
-      );
+      console.error("Booking preparation error:", error);
+      toast.error("Failed to prepare booking");
     } finally {
       setIsSubmitting(false);
     }
