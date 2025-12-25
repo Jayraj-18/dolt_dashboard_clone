@@ -187,12 +187,12 @@ const ProviderProfile = () => {
 
       const data = await response.json();
 
-      if (!data.success || !data.authUrl) {
-        throw new Error(data.message);
+      if (!data.success || !data.data?.authUrl) {
+        throw new Error(data.message || "Failed to get auth URL");
       }
 
       // redirect to MercadoPago for auth
-      window.location.href = data.authUrl;
+      window.location.href = data.data.authUrl;
     } catch (err) {
       console.error("Error connecting Mercado Pago:", err);
       toast.error(err.message);
@@ -310,8 +310,8 @@ const ProviderProfile = () => {
                   <p className="font-semibold">
                     {userdata.createdAt
                       ? new Date(
-                          userdata.createdAt._seconds * 1000
-                        ).getFullYear()
+                        userdata.createdAt._seconds * 1000
+                      ).getFullYear()
                       : "—"}
                   </p>
                 </div>
@@ -520,17 +520,25 @@ const ProviderProfile = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {userdata.extra?.mp_connected ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <h3 className="font-bold text-green-900">Mercado Pago Connected</h3>
+          {userdata.extra?.mp_account?.mp_connected ? (
+            <div className="bg-[#FF7A00]/10 border border-[#FF7A00]/20 rounded-xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <CreditCard className="w-24 h-24 text-[#FF7A00]" />
               </div>
-              <p className="text-sm text-green-700 mb-4">
-                Your account is linked. Payments will be credited automatically.
-              </p>
-              <div className="text-sm text-green-800">
-                <span className="font-semibold">User ID:</span> {userdata.extra?.mp_user_id}
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-[#FF7A00] rounded-full">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-lg text-[#FF7A00]">Mercado Pago Connected</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                  Your account is successfully linked. You can now accept bookings and receive payments directly.
+                </p>
+                <div className="flex items-center gap-2 text-sm bg-white/50 w-fit px-3 py-1.5 rounded-full border border-[#FF7A00]/20">
+                  <span className="text-[#FF7A00] font-semibold">Account ID:</span>
+                  <span className="font-mono text-foreground">{userdata.extra?.mp_account?.mp_user_id}</span>
+                </div>
               </div>
             </div>
           ) : (

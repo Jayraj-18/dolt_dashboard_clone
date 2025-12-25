@@ -1,13 +1,13 @@
 import axios from "axios";
 
 const Backend_URL =
-  import.meta.env.VITE_PUBLIC_BACKEND_URL 
+  import.meta.env.VITE_PUBLIC_BACKEND_URL
 
 export const fetchCounts = async () => {
   try {
     const response = await axios.get(`${Backend_URL}/api/admin/users/count`);
     if (response.data.success) {
-     
+
       return response.data.data; // ✅ return the data instead of setting state
     } else {
       throw new Error("Failed to fetch user counts");
@@ -23,7 +23,7 @@ export const fetchBooks = async () => {
   try {
     const response = await axios.get(`${Backend_URL}/api/admin/books`);
     if (response.data.success) {
-    
+
       return response.data;
     } else {
       throw new Error("Failed to fetch books");
@@ -87,7 +87,7 @@ export const getFullUserDetails = async () => {
 
 export const updateProviderProfile = async (formData) => {
   try {
-  
+
 
     const res = await axios.put(
       `${Backend_URL}/api/auth/update-profile`,
@@ -101,6 +101,22 @@ export const updateProviderProfile = async (formData) => {
 
   } catch (error) {
     console.error("Error updating profile:", error);
+    throw error;
+  }
+};
+
+export const updateBooking = async (bookingId, updates) => {
+  try {
+    const res = await axios.put(
+      `${Backend_URL}/api/bookings/updateBooking/${bookingId}`,
+      updates,
+      {
+        withCredentials: true,
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error updating booking:", error);
     throw error;
   }
 };
