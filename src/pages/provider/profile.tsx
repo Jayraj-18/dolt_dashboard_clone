@@ -11,7 +11,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { ImageUpload } from "../../components/ImageUpload";
-import { MapPin, Award, DollarSign, Star, Save, X } from "lucide-react";
+import { MapPin, Award, DollarSign, Star, Save, X, CreditCard, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -53,6 +53,7 @@ const ProviderProfile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [connecting, setConnecting] = useState(false); // MP Connection State
   const [userdata, setUserdata] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -170,6 +171,35 @@ const ProviderProfile = () => {
     }));
   };
 
+  // Mercado Pago Connection Handler
+  const handleConnectMercadoPago = async () => {
+    try {
+      setConnecting(true);
+
+      // Get Auth URL from backend
+      const response = await fetch(
+        `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/payments/oauth/authorize?providerId=${user.id}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Error generating AUTH URL");
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.data?.authUrl) {
+        throw new Error(data.message || "Failed to get auth URL");
+      }
+
+      // redirect to MercadoPago for auth
+      window.location.href = data.data.authUrl;
+    } catch (err) {
+      console.error("Error connecting Mercado Pago:", err);
+      toast.error(err.message);
+      setConnecting(false);
+    }
+  };
+
   const handleSave = async () => {
 
     if (!validateForm()) {
@@ -181,9 +211,9 @@ const ProviderProfile = () => {
     setIsSaving(true);
 
     try {
-    
+
       const res = await updateProviderProfile(formData);
-      
+
 
       // ✅ Fetch fresh data from backend after successful update
       const updatedData = await getFullUserDetails();
@@ -280,8 +310,8 @@ const ProviderProfile = () => {
                   <p className="font-semibold">
                     {userdata.createdAt
                       ? new Date(
-                          userdata.createdAt._seconds * 1000
-                        ).getFullYear()
+                        userdata.createdAt._seconds * 1000
+                      ).getFullYear()
                       : "—"}
                   </p>
                 </div>
@@ -475,6 +505,59 @@ const ProviderProfile = () => {
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Mercado Pago Integration - ADDED SECTION */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Payment Integration
+          </CardTitle>
+          <CardDescription>
+            Connect your Mercado Pago account to receive payments
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {userdata.extra?.mp_account?.mp_connected ? (
+            <div className="bg-[#FF7A00]/10 border border-[#FF7A00]/20 rounded-xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <CreditCard className="w-24 h-24 text-[#FF7A00]" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-[#FF7A00] rounded-full">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-lg text-[#FF7A00]">Mercado Pago Connected</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                  Your account is successfully linked. You can now accept bookings and receive payments directly.
+                </p>
+                <div className="flex items-center gap-2 text-sm bg-white/50 w-fit px-3 py-1.5 rounded-full border border-[#FF7A00]/20">
+                  <span className="text-[#FF7A00] font-semibold">Account ID:</span>
+                  <span className="font-mono text-foreground">{userdata.extra?.mp_account?.mp_user_id}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <CreditCard className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Connect Mercado Pago</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                Link your account to receive payments directly for your services.
+              </p>
+              <Button
+                onClick={handleConnectMercadoPago}
+                disabled={connecting}
+              >
+                {connecting ? "Connecting..." : "Connect Account"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

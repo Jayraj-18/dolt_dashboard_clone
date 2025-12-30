@@ -8,6 +8,9 @@ import { useData } from '../../contexts/DataContext';
 import { MessageSquare, MapPin, Calendar, DollarSign, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { updateBooking } from '../../api/AdminApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface JobUpdate {
   [key: string]: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
@@ -17,6 +20,8 @@ const JobsList = () => {
   const provider = mockProviders[0];
   const providerJobs = mockBookings.filter((b) => b.providerId === provider.id);
   const { updateJobStatus } = useData();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
   const [jobStatuses, setJobStatuses] = useState<JobUpdate>({
@@ -59,7 +64,28 @@ const JobsList = () => {
     setProcessingJob(jobId);
 
     try {
-      // Simulate API call
+      // Attempt Real Backend Update
+      // If validation fails (MP not connected), it will throw 403
+      if (user && user.id) {
+        try {
+          await updateBooking(jobId, {
+            status: newStatus === 'confirmed' ? 'accepted' : newStatus,
+            providerId: user.id
+          });
+        } catch (apiError: any) {
+          // Trap MP_REQUIRED error
+          if (apiError.response?.status === 403 && apiError.response?.data?.code === 'MP_REQUIRED') {
+            toast.error(apiError.response.data.message);
+            navigate('/provider/profile');
+            setProcessingJob(null); // Stop processing
+            return; // Exit early, do not update local state
+          }
+          // For other errors (e.g. 404 Mock Booking not found), ignore and proceed to Mock Update
+          console.warn("Backend update failed (likely mock data), falling back to local state:", apiError);
+        }
+      }
+
+      // Simulate API call (Fallback for Mocks)
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       setJobStatuses((prev) => ({

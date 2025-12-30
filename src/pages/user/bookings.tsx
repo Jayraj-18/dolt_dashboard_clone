@@ -12,6 +12,9 @@ import { Wrench, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { Booking } from "@/types/booking";
+import axios from "axios";
+import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 
 const Bookings = () => {
   const { user, bookings, fetchBookings, cancelBooking, loadingBookings } =
@@ -59,6 +62,52 @@ const formatDate = (timestamp: any) => {
       fetchBookings(user.id);
     }
   }, [user]);
+
+  const [searchParams] = useSearchParams();
+  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+
+  // Handle Post-Payment Booking Creation
+  useEffect(() => {
+    const action = searchParams.get("action");
+    const paymentId = searchParams.get("payment_id"); // MP returns this
+
+    if (action === "payment_success" && user?.id) {
+      const pendingBookingStr = localStorage.getItem("pendingBooking");
+
+      if (pendingBookingStr) {
+        const createPendingBooking = async () => {
+          try {
+            const bookingData = JSON.parse(pendingBookingStr);
+
+            // Enrich with payment info if needed
+            const finalBookingData = {
+              ...bookingData,
+              paymentId: paymentId,
+              status: 'pending' // Or 'accepted' depending on business logic
+            };
+
+            const response = await axios.post(`${BACKEND_URL}/api/bookings/createBooking`, finalBookingData);
+
+            if (response.status === 201) {
+              toast.success("Payment successful! Booking confirmed.");
+              localStorage.removeItem("pendingBooking");
+              // Refresh list
+              fetchBookings(user.id);
+              // Clean URL
+              window.history.replaceState({}, '', '/user/bookings');
+            }
+          } catch (error) {
+            console.error("Failed to finalize booking:", error);
+            toast.error("Payment received but failed to create booking record. Please contact support.");
+          }
+        };
+
+        createPendingBooking();
+      }
+    } else if (action === "payment_failure") {
+      toast.error("Payment failed or was cancelled.");
+    }
+  }, [searchParams, user]);
 
   // ✅ Apply filters whenever bookings or active filter changes
   useEffect(() => {
@@ -118,7 +167,7 @@ const formatDate = (timestamp: any) => {
     },
   ];
 
-  
+
 
 
   // ✅ Loading
@@ -147,8 +196,7 @@ const formatDate = (timestamp: any) => {
           <Card
             key={stat.key}
             onClick={() => setActiveFilter(stat.key)}
-            className={`cursor-pointer transition-all duration-200 ${
-              activeFilter === stat.key
+            className={`cursor-pointer transition-all duration-200 ${activeFilter === stat.key
                 ? "ring-2 ring-primary"
                 : "hover:ring-1 hover:ring-muted-foreground"
             }`}
