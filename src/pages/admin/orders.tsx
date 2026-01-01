@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { getProviderOrders } from '../../api/orders';
+import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
@@ -14,13 +16,34 @@ import {
 import { Search, Eye, RotateCcw } from 'lucide-react';
 
 const OrdersManagement = () => {
-  const [orders, setOrders] = useState([]); // Empty array — ready for real data
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered'>('all');
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        // Fetch all orders (no currentUserId => admin view)
+        const response = await getProviderOrders();
+        setOrders(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+        toast.error("Failed to load orders");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
   // Filtering logic
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.id?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch =
+      order.id?.toLowerCase().includes(searchLower) ||
+      order.providerName?.toLowerCase().includes(searchLower) ||
+      order.username?.toLowerCase().includes(searchLower);
     const matchesFilter = filter === 'all' || order.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -141,6 +164,7 @@ const OrdersManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
+                  <TableHead>Provider Info</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
@@ -154,27 +178,33 @@ const OrdersManagement = () => {
                   filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
-                        <span className="font-semibold text-foreground">{order.id}</span>
+                        <span className="font-semibold text-foreground">{order.id.slice(0, 8).toUpperCase()}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{order.customer || '—'}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">{order.providerName || "—"}</span>
+                          <span className="text-xs text-muted-foreground">{order.providerId ? order.providerId.slice(0, 8) : "—"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{order.username || order.details?.fullName || '—'}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {order.items?.length || 0}
                       </TableCell>
                       <TableCell>
                         <span className="font-semibold text-foreground">
-                          ${order.total?.toFixed(2) || '0.00'}
+                          ${(order.total_amount || 0).toFixed(2)}
                         </span>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>
                           {order.status
                             ? order.status.charAt(0).toUpperCase() +
-                              order.status.slice(1).replace('_', ' ')
+                            order.status.slice(1).replace('_', ' ')
                             : 'Unknown'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {order.date ? new Date(order.date).toLocaleDateString() : '—'}
+                        {order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">

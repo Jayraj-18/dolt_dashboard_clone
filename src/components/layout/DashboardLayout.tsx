@@ -59,17 +59,17 @@ interface NavItem {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout, setUser } = useAuth();
- 
-const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL 
 
-   const { cartItems = [] } = useData();
+  const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
+
+  const { cartItems = [] } = useData();
   const navigate = useNavigate();
   const location = useLocation();
 
   if (!user) return <div>Loading...</div>; // wait until user is loaded
 
   if (!user) {
- 
+
     return null;
   }
 
@@ -95,7 +95,7 @@ const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
     const roleSpecificItems: Record<string, NavItem[]> = {
       user: [
         { label: "Messages", href: "/user/messages", icon: MessageSquare },
-        {  label: "Notifications", href: `/user/notifications`,  icon: Bell,},
+        { label: "Notifications", href: `/user/notifications`, icon: Bell, },
         { label: "Book Service", href: "/user/book", icon: Calendar },
         { label: "My Bookings", href: "/user/bookings", icon: LayoutGrid },
         { label: "Marketplace", href: "/user/marketplace", icon: ShoppingCart },
@@ -105,9 +105,10 @@ const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
         { label: "Subscription", href: "/user/subscription", icon: Shield },
       ],
       provider: [
-         { label: "Messages", href: "/provider/messages", icon: MessageSquare },
-        {  label: "Notifications", href: `/provider/notifications`,  icon: Bell,},
-       // { label: "My Jobs", href: "/provider/jobs", icon: LayoutGrid },
+        { label: "Messages", href: "/provider/messages", icon: MessageSquare },
+        { label: "Notifications", href: `/provider/notifications`, icon: Bell, },
+        // { label: "My Jobs", href: "/provider/jobs", icon: LayoutGrid },
+        { label: "Product Orders", href: "/provider/orders", icon: ShoppingCart },
         { label: "Earnings", href: "/provider/earnings", icon: DollarSign },
         { label: "Calendar", href: "/provider/availability", icon: Calendar },
         { label: "Profile", href: "/provider/profile", icon: Settings },
@@ -151,19 +152,17 @@ const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
                       asChild
                       isActive={isActive(item.href)}
                       onClick={() => navigate(item.href)}
-                      className={`relative transition-all duration-200 ${
-                        isActive(item.href)
+                      className={`relative transition-all duration-200 ${isActive(item.href)
                           ? "bg-accent/20 text-accent border-l-2 border-accent"
                           : "text-sidebar-foreground hover:bg-accent/10 hover:text-accent"
-                      }`}
+                        }`}
                     >
                       <button className="flex items-center gap-2 w-full">
                         <item.icon
-                          className={`w-4 h-4 transition-colors ${
-                            isActive(item.href)
+                          className={`w-4 h-4 transition-colors ${isActive(item.href)
                               ? "text-accent"
                               : "text-sidebar-foreground"
-                          }`}
+                            }`}
                         />
                         <span>{item.label}</span>
                         {item.badge && (

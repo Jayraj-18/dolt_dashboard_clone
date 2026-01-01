@@ -26,9 +26,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
 
   const Backend_URL =
-    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
-    
-    const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
+    import.meta.env.VITE_PUBLIC_BACKEND_URL
+
+  const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
 
 
   // ✅ Verify user session when app loads
@@ -39,9 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const res = await axios.get(`${Backend_URL}/api/auth/verify`, {
           withCredentials: true,
         });
- 
+        console.log(res.data)
+
         setUser(res.data?.user || null);
-      
+
       } catch (err) {
         console.error("Failed to fetch user:", err);
         setUser(null);
@@ -172,40 +173,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleComplete = async (jobId: string, providerId: string) => {
-  try {
-    setLoading(true);
-    const res = await axios.put(`${Backend_URL}/api/bookings/${jobId}`, {
-      status: "completed",
-    });
+    try {
+      setLoading(true);
+      const res = await axios.put(`${Backend_URL}/api/bookings/${jobId}`, {
+        status: "completed",
+      });
 
-    if (res.status === 200) {
-      alert("Job marked as completed ✅");
-      await fetchBookingsProviders(providerId);
+      if (res.status === 200) {
+        alert("Job marked as completed ✅");
+        await fetchBookingsProviders(providerId);
+      }
+    } catch (err) {
+      console.error("❌ Error marking job complete:", err);
+      alert("Failed to mark job as complete");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("❌ Error marking job complete:", err);
-    alert("Failed to mark job as complete");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ✅ Logout
- const logout = async () => {
-  try {
-    await axios.post(
-      `${Backend_URL}/api/auth/logout`,
-      {},
-      { withCredentials: true } // required for cookie removal
-    );
-  } catch (err) {
-    console.error("Logout request failed:", err);
-  }
+  const logout = async () => {
+    try {
+      await axios.post(
+        `${Backend_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true } // required for cookie removal
+      );
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    }
 
-  setUser(null);
-  localStorage.removeItem("currentUser");
-  window.location.href = MAIN_URL;
-};
+    setUser(null);
+    localStorage.removeItem("currentUser");
+    window.location.href = `${MAIN_URL}/login`;
+  };
 
 
   // ✅ Switch role (for testing multi-role access)
@@ -224,8 +225,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         setUser,
         logout,
-      // switchRole,
-      loading,
+        // switchRole,
+        loading,
         isLoading,
         bookings,
         fetchBookings,
@@ -234,7 +235,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         handleAccept,
         providerBookings,
         loadingProviderBookings,
-     
+
         fetchBookingsProviders,
         handleComplete
       }}

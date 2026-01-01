@@ -1,22 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { Label } from '../../components/ui/label';
-import { mockProducts } from '../../lib/mockData';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { toast } from 'sonner';
+import { createOrder } from '../../api/orders';
+import { useAuth } from '../../contexts/AuthContext';
+import { getProducts, ProductData } from '../../api/products';
 
 const ShoppingCart = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { cartItems, removeFromCart, updateCartQuantity, clearCart } = useData();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [checkoutData, setCheckoutData] = useState({
     email: '',
     fullName: '',
+    phoneNumber: '', // ✅ Added phone number
     address: '',
     city: '',
     zipCode: '',
@@ -24,7 +31,31 @@ const ShoppingCart = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const getProduct = (id: string) => mockProducts.find((p) => p.id === id);
+  useEffect(() => {
+    fetchProducts();
+    // ✅ Pre-fill user data if available
+    if (user) {
+      setCheckoutData(prev => ({
+        ...prev,
+        email: user.email || '',
+        fullName: user.name || user.fullName || '',
+        phoneNumber: user.phone || '' // ✅ Pre-fill phone
+      }));
+    }
+  }, [user]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await getProducts();
+      setProducts(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch products", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProduct = (id: string) => products.find((p) => p._id === id);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.08;
@@ -39,6 +70,7 @@ const ShoppingCart = () => {
       newErrors.email = 'Invalid email format';
     }
     if (!checkoutData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!checkoutData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required'; // ✅ Validate phone
     if (!checkoutData.address.trim()) newErrors.address = 'Address is required';
     if (!checkoutData.city.trim()) newErrors.city = 'City is required';
     if (!checkoutData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
@@ -67,31 +99,60 @@ const ShoppingCart = () => {
       return;
     }
 
+    if (!user) {
+      toast.error('You must be logged in to checkout');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      // ✅ Filter out items where product not found, and attach providerId
+      const orderItems = cartItems.map(item => {
+        const product = getProduct(item.productId);
+        if (!product) return null;
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+          name: product.name,
+          providerId: product.providerId // ✅ Critical for splitting orders
+        };
+      }).filter(Boolean);
 
-      toast.success('Order placed successfully!', {
-        description: `Order ID: ORD_${Date.now()}. Your order will be shipped within 2-3 business days.`,
+      if (orderItems.length === 0) {
+        toast.error("Cart is empty or products unavailable");
+        setIsProcessing(false);
+        return;
+      }
+
+      await createOrder({
+        userid: user.id,
+        username: user.name || user.email,
+        details: checkoutData,
+        items: orderItems as any[],
+        total_amount: total
       });
 
-      // Clear cart and reset
+      toast.success('Order placed successfully!', {
+        description: `Your order has been placed. You can view it in the Orders page.`,
+      });
+
       clearCart();
       setIsCheckingOut(false);
-      setCheckoutData({ email: '', fullName: '', address: '', city: '', zipCode: '' });
+      setCheckoutData({ email: '', fullName: '', phoneNumber: '', address: '', city: '', zipCode: '' });
 
-      // Navigate to orders page after a delay
       setTimeout(() => {
         navigate('/user/orders');
       }, 1500);
-    } catch (error) {
-      toast.error('Payment processing failed. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Payment processing failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
+
+  if (loading) return <div className="p-8 text-center">Loading cart...</div>;
 
   if (cartItems.length === 0) {
     return (
@@ -177,11 +238,13 @@ const ShoppingCart = () => {
                             }
                             className="w-12 text-center border-0 bg-transparent"
                             min="1"
+                            max={product.stock}
                           />
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
+                            disabled={item.quantity >= product.stock}
                           >
                             <Plus className="w-4 h-4" />
                           </Button>
@@ -290,6 +353,19 @@ const ShoppingCart = () => {
                     className={errors.fullName ? 'border-destructive' : ''}
                   />
                   {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Mobile Number *</Label>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    value={checkoutData.phoneNumber}
+                    onChange={(e) => handleCheckoutChange('phoneNumber', e.target.value)}
+                    className={errors.phoneNumber ? 'border-destructive' : ''}
+                    placeholder="Enter mobile number"
+                  />
+                  {errors.phoneNumber && <p className="text-xs text-destructive">{errors.phoneNumber}</p>}
                 </div>
 
                 <div className="space-y-2">

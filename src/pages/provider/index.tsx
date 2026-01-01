@@ -137,7 +137,7 @@ const ProviderDashboard = () => {
             <p className="text-muted-foreground">Total Amount</p>
             <p className="font-medium text-accent">
               {job.total_amount
-                ? `${job.currency === "USD" ? "$" : "₹"}${job.total_amount}`
+                ? `${job.currency === "USD" ? "$" : "$"}${job.total_amount}`
                 : "—"}
             </p>
           </div>

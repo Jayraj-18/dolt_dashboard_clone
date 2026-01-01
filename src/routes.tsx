@@ -32,6 +32,7 @@ import SkillsAndServices from './pages/provider/skills';
 import ProviderNotifications from './pages/provider/notifications';
 import Messages from './pages/provider/messages';
 import PaymentSettings from './pages/provider/payment-settings';
+import ProductOrders from './pages/provider/product-orders';
 // Admin pages
 import AdminDashboard from './pages/admin';
 import AdminUsers from './pages/admin/users';
@@ -84,7 +85,7 @@ const routes = [
     element: (
       <ProtectedRoute allowedRoles={['user']}>
         <DashboardLayout>
-         <Bookings/>
+          <Bookings />
         </DashboardLayout>
       </ProtectedRoute>
     ),
@@ -297,6 +298,16 @@ const routes = [
       <ProtectedRoute allowedRoles={['provider']}>
         <DashboardLayout>
           <PaymentSettings />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/provider/orders',
+    element: (
+      <ProtectedRoute allowedRoles={['provider']}>
+        <DashboardLayout>
+          <ProductOrders />
         </DashboardLayout>
       </ProtectedRoute>
     ),

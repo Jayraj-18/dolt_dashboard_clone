@@ -109,8 +109,8 @@ const Analytics = () => {
         const providerStats: ProviderData[] =
           providersData?.map((p: any) => ({
             name: p.fullName || "Unknown",
-            jobs: Array.isArray(p.completedBookings) 
-              ? p.completedBookings.length 
+            jobs: Array.isArray(p.completedBookings)
+              ? p.completedBookings.length
               : Number(p.completedBookings) || 0, // ✅ Handle both array and number
           })) || [];
 
@@ -203,7 +203,7 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
-              ₹
+              $
               {revenueData?.length
                 ? revenueData[revenueData.length - 1]?.totalRevenue
                 : 0}

@@ -32,50 +32,50 @@ const BookingsManagement = () => {
   const [filter, setFilter] = useState("all");
 
   // ✅ Fetch bookings from backend
-useEffect(() => {
-  const getBookings = async () => {
-    try {
-      const res = await fetchBooks();
-     
-      if (res.success) {
-        // Combine all booking arrays into one flat array
-        const allBookings = [
-          ...(res.data.accepted || []),
-          ...(res.data.completed || []),
-          ...(res.data.cancelled || []),
-          ...(res.data.pending || []),
-        ];
+  useEffect(() => {
+    const getBookings = async () => {
+      try {
+        const res = await fetchBooks();
 
-        setBookings(allBookings);
-        setCounts({
-          totalBookings: res.totalBookings,
-          acceptedCount: res.acceptedCount,
-          cancelledCount: res.cancelledCount,
-          completedCount: res.completedCount,
-        });
+        if (res.success) {
+          // Combine all booking arrays into one flat array
+          const allBookings = [
+            ...(res.data.accepted || []),
+            ...(res.data.completed || []),
+            ...(res.data.cancelled || []),
+            ...(res.data.pending || []),
+          ];
+
+          setBookings(allBookings);
+          setCounts({
+            totalBookings: res.totalBookings,
+            acceptedCount: res.acceptedCount,
+            cancelledCount: res.cancelledCount,
+            completedCount: res.completedCount,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
       }
-    } catch (error) {
-      console.error("Error fetching bookings:", error);
-    }
-  };
-  getBookings();
-}, []);
+    };
+    getBookings();
+  }, []);
 
 
   // ✅ Filtered results
-const filteredBookings = bookings.filter((booking) => {
-  const matchesSearch =
-    searchTerm.trim() === "" ||
-    booking.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.id?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredBookings = bookings.filter((booking) => {
+    const matchesSearch =
+      searchTerm.trim() === "" ||
+      booking.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.id?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  // Normalize both values to lowercase
-  const matchesFilter =
-    filter === "all" ||
-    booking.status?.toLowerCase() === filter.toLowerCase();
+    // Normalize both values to lowercase
+    const matchesFilter =
+      filter === "all" ||
+      booking.status?.toLowerCase() === filter.toLowerCase();
 
-  return matchesSearch && matchesFilter;
-});
+    return matchesSearch && matchesFilter;
+  });
 
 
 
@@ -85,7 +85,7 @@ const filteredBookings = bookings.filter((booking) => {
       case "pending":
       case "confirmed":
         return "bg-[#FF7A00] text-white";
-     
+
       case "accepted":
         return "bg-[#22C55E] text-white";
       case "completed":
@@ -249,24 +249,24 @@ const filteredBookings = bookings.filter((booking) => {
                       <TableCell className="text-muted-foreground">
                         {booking.scheduled_date
                           ? format(
-                              booking.scheduled_date.toDate
-                                ? booking.scheduled_date.toDate()
-                                : new Date(booking.scheduled_date),
-                              "MMM d, h:mm a"
-                            )
+                            booking.scheduled_date.toDate
+                              ? booking.scheduled_date.toDate()
+                              : new Date(booking.scheduled_date),
+                            "MMM d, h:mm a"
+                          )
                           : "—"}
                       </TableCell>
 
                       <TableCell>
                         <span className="font-semibold text-foreground">
-                          ₹{booking.total_amount || 0}
+                          ${booking.total_amount || 0}
                         </span>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(booking.status)}>
                           {booking.status
                             ? booking.status.charAt(0).toUpperCase() +
-                              booking.status.slice(1).replace("_", " ")
+                            booking.status.slice(1).replace("_", " ")
                             : "—"}
                         </Badge>
                       </TableCell>

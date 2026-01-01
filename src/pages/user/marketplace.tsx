@@ -1,37 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { mockProducts } from '../../lib/mockData';
-import { ShoppingCart, Star, Search, Filter, Trash2 } from 'lucide-react';
+import { ShoppingCart, Star, Search, Filter, Trash2, ShoppingBag } from 'lucide-react';
 import { Input } from '../../components/ui/input';
 import { useData } from '../../contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getProducts, ProductData } from '../../api/products';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Marketplace = () => {
   const { cartItems, addToCart, removeFromCart, updateCartQuantity } = useData();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const categories = ['All', ...new Set(mockProducts.map((p) => p.category))];
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const filteredProducts = mockProducts.filter((product) => {
+  const fetchProducts = async () => {
+    try {
+      const response = await getProducts();
+      setProducts(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch products", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const categories = ['All', ...new Set(products.map((p) => p.category))];
+
+  const filteredProducts = products.filter((product) => {
     const categoryMatch = !selectedCategory || selectedCategory === 'All' || product.category === selectedCategory;
     const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     return categoryMatch && searchMatch;
   });
 
   const handleAddToCart = (productId: string, price: number) => {
+    const product = products.find((p) => p._id === productId);
+
+    // 🛑 Prevent Self-Ordering
+    if (user && product?.providerId === user.id) {
+      toast.error("You cannot order your own product!");
+      return;
+    }
+
     addToCart(productId, 1, price);
-    const product = mockProducts.find((p) => p.id === productId);
     toast.success(`Added ${product?.name} to cart`);
   };
 
   const handleRemoveFromCart = (productId: string) => {
     removeFromCart(productId);
-    const product = mockProducts.find((p) => p.id === productId);
+    const product = products.find((p) => p._id === productId);
     toast.success(`Removed ${product?.name} from cart`);
   };
 
@@ -45,6 +72,10 @@ const Marketplace = () => {
 
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading products...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -112,28 +143,39 @@ const Marketplace = () => {
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {filteredProducts.map((product) => {
-          const cartItem = cartItems.find((item) => item.productId === product.id);
+          const cartItem = cartItems.find((item) => item.productId === product._id);
 
           return (
-            <Card key={product.id} className="flex flex-col hover:shadow-lg transition-all overflow-hidden">
+            <Card key={product._id} className="flex flex-col hover:shadow-lg transition-all overflow-hidden group relative">
+              {product.providerName && (
+                <Badge variant="secondary" className="absolute top-2 right-2 z-10 opacity-90">
+                  Sold by {product.providerName}
+                </Badge>
+              )}
               <div className="h-48 bg-muted overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform"
-                />
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                    <ShoppingBag className="w-12 h-12" />
+                  </div>
+                )}
               </div>
               <CardContent className="flex-1 flex flex-col p-4 space-y-3">
                 <div>
-                  <Badge variant="secondary" className="text-xs mb-2">
+                  <Badge variant="outline" className="text-xs mb-2">
                     {product.category}
                   </Badge>
-                  <h3 className="font-semibold text-foreground">{product.name}</h3>
+                  <h3 className="font-semibold text-foreground truncate" title={product.name}>{product.name}</h3>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-warning text-warning" />
-                  <span className="text-sm font-semibold">{product.rating}</span>
+                  <span className="text-sm font-semibold">{product.rating || 0}</span>
                 </div>
 
                 <div className="flex items-baseline justify-between pt-2 border-t border-border">
@@ -150,7 +192,7 @@ const Marketplace = () => {
                         size="sm"
                         variant="outline"
                         className="px-2"
-                        onClick={() => handleQuantityChange(product.id, cartItem.quantity - 1)}
+                        onClick={() => product._id && handleQuantityChange(product._id, cartItem.quantity - 1)}
                       >
                         −
                       </Button>
@@ -159,7 +201,7 @@ const Marketplace = () => {
                         size="sm"
                         variant="outline"
                         className="px-2"
-                        onClick={() => handleQuantityChange(product.id, cartItem.quantity + 1)}
+                        onClick={() => product._id && handleQuantityChange(product._id, cartItem.quantity + 1)}
                       >
                         +
                       </Button>
@@ -167,13 +209,13 @@ const Marketplace = () => {
                         size="sm"
                         variant="ghost"
                         className="text-destructive"
-                        onClick={() => handleRemoveFromCart(product.id)}
+                        onClick={() => product._id && handleRemoveFromCart(product._id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ) : (
-                    <Button className="flex-1" size="sm" onClick={() => handleAddToCart(product.id, product.price)}>
+                    <Button className="flex-1" size="sm" onClick={() => product._id && handleAddToCart(product._id, product.price)}>
                       <ShoppingCart className="w-4 h-4 mr-2" />
                       Add
                     </Button>

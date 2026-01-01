@@ -11,13 +11,15 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { ImageUpload } from "../../components/ImageUpload";
-import { MapPin, Award, DollarSign, Star, Save, X, CreditCard, CheckCircle } from "lucide-react";
+import { MapPin, Award, DollarSign, Star, Save, X, CreditCard, CheckCircle, ShoppingBag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getFullUserDetails,
   updateProviderProfile,
 } from "../../api/AdminApi.js";
+import { AddProductForm } from "../../components/provider/AddProductForm";
+import { getProducts, deleteProduct, ProductData } from "../../api/products";
 
 
 interface ProviderExtra {
@@ -54,7 +56,8 @@ const ProviderProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [connecting, setConnecting] = useState(false); // MP Connection State
-  const [userdata, setUserdata] = useState(null);
+  const [userdata, setUserdata] = useState<ProviderData | null>(null);
+  const [products, setProducts] = useState<ProductData[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -68,7 +71,7 @@ const ProviderProfile = () => {
 
   const [newSkill, setNewSkill] = useState("");
   const [newArea, setNewArea] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<any>({});
 
   // Fetch user profile exactly once
   // Remove updateProviderProfile from useEffect dependency
@@ -84,7 +87,8 @@ const ProviderProfile = () => {
           hourlyRate: data.extra?.hourlyRate || 0, // ✅ Get from extra
           skills: data.extra?.skills || [],
           serviceAreas: data.extra?.serviceAreas || [],
-          avatar: data.extra?.avatar || "",
+          serviceAreas: data.extra?.serviceAreas || [],
+          avatar: data.avatar || data.extra?.avatar || "",
           userId: user.id,
         });
       } catch (error) {
@@ -92,10 +96,36 @@ const ProviderProfile = () => {
       }
     };
     fetch();
+
+    if (user?.id) {
+      fetchProducts();
+    }
   }, []); // ✅ Empty dependency array - fetch only once on mount
 
+  const fetchProducts = async () => {
+    try {
+      if (user?.id) {
+        const response = await getProducts(user.id);
+        setProducts(response.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products", error);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await deleteProduct(id);
+      toast.success("Product deleted");
+      fetchProducts();
+    } catch (error) {
+      toast.error("Failed to delete product");
+    }
+  };
+
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: any = {};
 
     // Name is optional — remove validation
     // if (!formData.name.trim()) newErrors.name = "Name is required";
@@ -125,12 +155,12 @@ const ProviderProfile = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setErrors((prev: any) => ({ ...prev, [field]: undefined }));
   };
 
-  const handleImageChange = (imageData) => {
+  const handleImageChange = (imageData: string) => {
     setFormData((prev) => ({
       ...prev,
       avatar: imageData,
@@ -138,36 +168,36 @@ const ProviderProfile = () => {
   };
 
   const addSkill = () => {
-    if (newSkill && !formData.skills.includes(newSkill)) {
+    if (newSkill && !(formData.skills as string[]).includes(newSkill)) {
       setFormData((prev) => ({
         ...prev,
-        skills: [...prev.skills, newSkill],
+        skills: [...(prev.skills as string[]), newSkill],
       }));
       setNewSkill("");
     }
   };
 
-  const removeSkill = (skill) => {
+  const removeSkill = (skill: string) => {
     setFormData((prev) => ({
       ...prev,
-      skills: prev.skills.filter((s) => s !== skill),
+      skills: (prev.skills as string[]).filter((s) => s !== skill),
     }));
   };
 
   const addServiceArea = () => {
-    if (newArea && !formData.serviceAreas.includes(newArea)) {
+    if (newArea && !(formData.serviceAreas as string[]).includes(newArea)) {
       setFormData((prev) => ({
         ...prev,
-        serviceAreas: [...prev.serviceAreas, newArea],
+        serviceAreas: [...(prev.serviceAreas as string[]), newArea],
       }));
       setNewArea("");
     }
   };
 
-  const removeServiceArea = (area) => {
+  const removeServiceArea = (area: string) => {
     setFormData((prev) => ({
       ...prev,
-      serviceAreas: prev.serviceAreas.filter((a) => a !== area),
+      serviceAreas: (prev.serviceAreas as string[]).filter((a) => a !== area),
     }));
   };
 
@@ -193,7 +223,7 @@ const ProviderProfile = () => {
 
       // redirect to MercadoPago for auth
       window.location.href = data.data.authUrl;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error connecting Mercado Pago:", err);
       toast.error(err.message);
       setConnecting(false);
@@ -310,7 +340,7 @@ const ProviderProfile = () => {
                   <p className="font-semibold">
                     {userdata.createdAt
                       ? new Date(
-                        userdata.createdAt._seconds * 1000
+                        userdata.createdAt._seconds! * 1000
                       ).getFullYear()
                       : "—"}
                   </p>
@@ -407,7 +437,7 @@ const ProviderProfile = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Hourly Rate</p>
                   <p className="text-2xl font-bold">
-                    ${userdata.extra?.hourlyRate || userdata.hourlyRate || 0}/hr
+                    ${userdata.extra?.hourlyRate || (userdata as any).hourlyRate || 0}/hr
                   </p>
                 </div>
               </div>
@@ -438,7 +468,7 @@ const ProviderProfile = () => {
 
           <div className="flex flex-wrap gap-2">
             {formData.skills && formData.skills.length > 0 ? (
-              formData.skills.map((skill) => (
+              (formData.skills as string[]).map((skill) => (
                 <Badge
                   key={skill}
                   className="bg-primary text-primary-foreground py-1 px-3 text-sm flex items-center gap-2"
@@ -488,7 +518,7 @@ const ProviderProfile = () => {
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {formData.serviceAreas.map((area) => (
+            {(formData.serviceAreas as string[]).map((area) => (
               <div
                 key={area}
                 className="flex items-center justify-between p-3 border rounded-lg"
@@ -508,6 +538,62 @@ const ProviderProfile = () => {
         </CardContent>
       </Card>
 
+      {/* My Products Section - ADDED */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" /> My Products
+              </CardTitle>
+              <CardDescription>
+                Manage the products you are selling
+              </CardDescription>
+            </div>
+            <AddProductForm onProductAdded={fetchProducts} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {products.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No products listing. Add one above.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {products.map((product) => (
+                  <div key={product._id} className="border rounded-lg p-4 flex gap-4 relative group">
+                    <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                      {product.image ? (
+                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                          <ShoppingBag className="w-8 h-8" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold truncate" title={product.name}>{product.name}</h4>
+                      <p className="text-sm text-muted-foreground">{product.category}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="font-bold">${product.price}</span>
+                        <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => product._id && handleDeleteProduct(product._id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Mercado Pago Integration - ADDED SECTION */}
       <Card>
         <CardHeader>
@@ -520,7 +606,7 @@ const ProviderProfile = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {userdata.extra?.mp_account?.mp_connected ? (
+          {(userdata.extra as any)?.mp_account?.mp_connected ? (
             <div className="bg-[#FF7A00]/10 border border-[#FF7A00]/20 rounded-xl p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <CreditCard className="w-24 h-24 text-[#FF7A00]" />
@@ -537,7 +623,7 @@ const ProviderProfile = () => {
                 </p>
                 <div className="flex items-center gap-2 text-sm bg-white/50 w-fit px-3 py-1.5 rounded-full border border-[#FF7A00]/20">
                   <span className="text-[#FF7A00] font-semibold">Account ID:</span>
-                  <span className="font-mono text-foreground">{userdata.extra?.mp_account?.mp_user_id}</span>
+                  <span className="font-mono text-foreground">{(userdata.extra as any)?.mp_account?.mp_user_id}</span>
                 </div>
               </div>
             </div>
@@ -583,3 +669,4 @@ const ProviderProfile = () => {
 };
 
 export default ProviderProfile;
+

@@ -4,9 +4,32 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Package, Truck, CheckCircle2, Download, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
+import { getUserOrders } from "../../api/orders";
+import { useAuth } from "../../contexts/AuthContext";
+import { toast } from "sonner";
 
 const Orders = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!user) return;
+      try {
+        const fetchedOrders = await getUserOrders(user.id);
+        console.log("Fetched Orders:", fetchedOrders.data);
+        setOrders(fetchedOrders.data || []);
+      } catch (error) {
+        toast.error("Failed to load orders");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [user]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -14,18 +37,33 @@ const Orders = () => {
         return "bg-[#22C55E] text-white";
       case "shipped":
       case "processing":
+      case "accepted":
+      case "in_progress":
         return "bg-[#FF7A00] text-white";
       case "pending":
+      case "pending_payment":
         return "bg-[#A0A0A0] text-white";
+      case "cancelled":
+        return "bg-destructive text-destructive-foreground";
       default:
         return "bg-muted text-muted-foreground";
     }
   };
 
   const getStatusStep = (status: string) => {
-    const steps = ["pending", "processing", "shipped", "delivered"];
+    if (status === "cancelled") return -1;
+    const steps = ["pending_payment", "processing", "shipped", "delivered"];
+    // map common statuses
+    if (status === "pending") status = "pending_payment";
+    if (status === "accepted") status = "processing";
+    if (status === "in_progress") status = "processing";
+
     return steps.indexOf(status);
   };
+
+  if (loading) {
+    return <div>Loading orders...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -71,7 +109,7 @@ const Orders = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
-              ${orders.reduce((sum, o) => sum + (o.total || 0), 0)}
+              ${orders.reduce((sum, o) => sum + (o.total_amount || 0), 0).toFixed(2)}
             </p>
           </CardContent>
         </Card>
@@ -87,14 +125,14 @@ const Orders = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">Order {order.id}</CardTitle>
+                    <CardTitle className="text-lg">Order {order.id.slice(0, 8).toUpperCase()}</CardTitle>
                     <CardDescription>
-                      {order.date ? format(new Date(order.date), "MMM d, yyyy") : "—"}
+                      {order.created_at ? format(new Date(order.created_at), "MMM d, yyyy") : "—"}
                     </CardDescription>
                   </div>
                   <Badge className={getStatusColor(order.status)}>
                     {order.status
-                      ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
+                      ? order.status.replace('_', ' ').charAt(0).toUpperCase() + order.status.replace('_', ' ').slice(1)
                       : "Unknown"}
                   </Badge>
                 </div>
@@ -119,40 +157,44 @@ const Orders = () => {
                   </div>
                   <div className="border-t border-border mt-3 pt-3 flex justify-between font-semibold">
                     <span>Total</span>
-                    <span>${order.total || 0}</span>
+                    <span>${(order.total_amount || 0).toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Order Timeline */}
                 <div>
                   <h4 className="font-semibold text-foreground mb-4">Delivery Status</h4>
-                  <div className="flex items-center justify-between">
-                    {["Order Placed", "Processing", "Shipped", "Delivered"].map((step, idx) => (
-                      <div key={idx} className="flex flex-col items-center flex-1">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            idx <= statusStep
+                  {order.status !== "cancelled" ? (
+                    <div className="flex items-center justify-between">
+                      {["Placed", "Processing", "Shipped", "Delivered"].map((step, idx) => (
+                        <div key={idx} className="flex flex-col items-center flex-1">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${idx <= statusStep
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {idx < statusStep ? (
-                            <CheckCircle2 className="w-5 h-5" />
-                          ) : (
-                            <span className="text-sm font-semibold">{idx + 1}</span>
+                              }`}
+                          >
+                            {idx < statusStep ? (
+                              <CheckCircle2 className="w-5 h-5" />
+                            ) : (
+                              <span className="text-sm font-semibold">{idx + 1}</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-center text-muted-foreground mt-2">{step}</p>
+                          {idx !== 3 && (
+                            <div
+                              className={`flex-1 h-1 mx-1 mt-3 ${idx < statusStep ? "bg-primary" : "bg-muted"
+                                }`}
+                            />
                           )}
                         </div>
-                        <p className="text-xs text-center text-muted-foreground mt-2">{step}</p>
-                        {idx !== 3 && (
-                          <div
-                            className={`flex-1 h-1 mx-1 mt-3 ${
-                              idx < statusStep ? "bg-primary" : "bg-muted"
-                            }`}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-destructive/10 text-destructive rounded text-center">
+                      This order has been cancelled.
+                    </div>
+                  )}
                 </div>
 
                 {/* Timeline Details */}
@@ -162,25 +204,10 @@ const Orders = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Order Placed</span>
                       <span className="text-foreground">
-                        {order.date ? format(new Date(order.date), "MMM d, yyyy") : "—"}
+                        {order.created_at ? format(new Date(order.created_at), "MMM d, yyyy") : "—"}
                       </span>
                     </div>
-                    {order.shippingDate && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Shipped</span>
-                        <span className="text-foreground">
-                          {format(new Date(order.shippingDate), "MMM d, yyyy")}
-                        </span>
-                      </div>
-                    )}
-                    {order.deliveryDate && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Delivered</span>
-                        <span className="text-foreground">
-                          {format(new Date(order.deliveryDate), "MMM d, yyyy")}
-                        </span>
-                      </div>
-                    )}
+                    {/* Add more timeline details if available in backend data */}
                   </div>
                 </div>
 
