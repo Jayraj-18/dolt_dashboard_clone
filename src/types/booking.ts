@@ -23,4 +23,14 @@ export interface Booking {
   updated_at?: string;
   completed_date?: string | null;
   totalBookings?: number;
+
+  // Rating & Issue Fields
+  rating?: number;
+  review?: string;
+  hasIssue?: boolean;
+  issueDetails?: {
+    reason: string;
+    description: string;
+    reportedAt: string;
+  };
 }

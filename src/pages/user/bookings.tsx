@@ -15,6 +15,7 @@ import { Booking } from "@/types/booking";
 import axios from "axios";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
+import { ReviewModal } from "../../components/bookings/ReviewModal";
 
 const Bookings = () => {
   const { user, bookings, fetchBookings, cancelBooking, loadingBookings } =
@@ -23,6 +24,10 @@ const Bookings = () => {
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [canceling, setCanceling] = useState<string | null>(null);
+
+  // Review Modal State
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // ✅ Format date safely
 // Format Firestore Timestamp
@@ -288,9 +293,17 @@ const formatDate = (timestamp: any) => {
                   )}
 
                   {booking.status === "completed" && (
-                    <Button className="flex-1" size="sm">
+                    <Button
+                      className="flex-1"
+                      size="sm"
+                      onClick={() => {
+                        setReviewBooking(booking);
+                        setIsReviewOpen(true);
+                      }}
+                      disabled={!!booking.rating || !!booking.hasIssue} // Disable if already rated or has issue
+                    >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Leave Review
+                      {booking.hasIssue ? "Disputed" : booking.rating ? "Reviewed" : "Leave Review"}
                     </Button>
                   )}
 
@@ -320,6 +333,18 @@ const formatDate = (timestamp: any) => {
           </Card>
         )}
       </div>
+
+      {/* Review Modal */}
+      {reviewBooking && (
+        <ReviewModal
+          isOpen={isReviewOpen}
+          onClose={() => setIsReviewOpen(false)}
+          booking={reviewBooking}
+          onSuccess={() => {
+            fetchBookings(user.id); // Refresh list
+          }}
+        />
+      )}
     </div>
   );
 };

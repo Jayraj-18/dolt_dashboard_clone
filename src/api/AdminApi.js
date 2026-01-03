@@ -120,3 +120,32 @@ export const updateBooking = async (bookingId, updates) => {
     throw error;
   }
 };
+
+// ?
+export const rateBooking = async (data) => {
+  try {
+    const res = await axios.post(
+      `${Backend_URL}/api/bookings/rate`,
+      data,
+      { withCredentials: true }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error rating booking:", error);
+    throw error;
+  }
+};
+
+export const reportIssue = async (data) => {
+  try {
+    const res = await axios.post(
+      `${Backend_URL}/api/bookings/report-issue`,
+      data,
+      { withCredentials: true }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error reporting issue:", error);
+    throw error;
+  }
+};
