@@ -7,12 +7,17 @@ function Index() {
   const navigate = useNavigate();          // 🟢 hook must run always
 
   const MAIN_URL =
-    import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL 
+    import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
 
   // 🟢 useEffect must run before any conditional return
   useEffect(() => {
     if (!isLoading && user) {
-      navigate(`/${user.role}`);
+      if (user.role) {
+        navigate(`/${user.role}`);
+      } else {
+        console.error("User has no role, redirecting to login");
+        navigate("/login");
+      }
     }
   }, [user, isLoading, navigate]);
 
