@@ -1,4 +1,4 @@
-const API_URL = (import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:5000") + "/api/orders";
+const API_URL = (import.meta.env.VITE_PUBLIC_BACKEND_URL) + "/api/orders";
 
 export interface OrderData {
     userid: string;
