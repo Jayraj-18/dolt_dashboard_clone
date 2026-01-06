@@ -126,7 +126,7 @@ const ShoppingCart = () => {
         return;
       }
 
-      await createOrder({
+      const response = await createOrder({
         userid: user.id,
         username: user.name || user.email,
         details: checkoutData,
@@ -135,16 +135,23 @@ const ShoppingCart = () => {
       });
 
       toast.success('Order placed successfully!', {
-        description: `Your order has been placed. You can view it in the Orders page.`,
+        description: `Proceeding to payment...`,
       });
 
       clearCart();
       setIsCheckingOut(false);
       setCheckoutData({ email: '', fullName: '', phoneNumber: '', address: '', city: '', zipCode: '' });
 
-      setTimeout(() => {
-        navigate('/user/orders');
-      }, 1500);
+      if (response && response.checkoutGroupId) {
+        setTimeout(() => {
+          navigate(`/user/payment/${response.checkoutGroupId}`);
+        }, 1500);
+      } else {
+        // Fallback if no checkoutGroupId (legacy behavior or error)
+        setTimeout(() => {
+          navigate('/user/orders');
+        }, 1500);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Payment processing failed. Please try again.');
     } finally {

@@ -26,11 +26,19 @@ const PaymentPage = () => {
             setIsLoading(false);
         }
 
-        // Fetch Booking Data
+        // Fetch Booking or Order Group Data
         const fetchBooking = async () => {
             try {
                 if (!bookingId) return;
-                const res = await fetch(`${BACKEND_URL}/api/bookings/getBooking/${bookingId}`);
+
+                let endpoint = `${BACKEND_URL}/api/bookings/getBooking/${bookingId}`;
+
+                // Check if it's an Order Group
+                if (bookingId.startsWith("ORDER-")) {
+                    endpoint = `${BACKEND_URL}/api/orders/group/${bookingId}`;
+                }
+
+                const res = await fetch(endpoint);
 
                 if (res.ok) {
                     const data = await res.json();
@@ -38,13 +46,13 @@ const PaymentPage = () => {
                     if (data.success) {
                         setBooking(data.data);
                     } else {
-                        console.error("Booking fetch unsuccessful:", data.message);
+                        console.error("Fetch unsuccessful:", data.message);
                     }
                 } else {
-                    console.error("Booking fetch failed status:", res.status);
+                    console.error("Fetch failed status:", res.status);
                 }
             } catch (e) {
-                console.error("Failed to fetch booking:", e);
+                console.error("Failed to fetch data:", e);
             }
         };
         fetchBooking();
