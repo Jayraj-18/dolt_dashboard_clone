@@ -149,3 +149,15 @@ export const reportIssue = async (data) => {
     throw error;
   }
 };
+export const getProviderBookings = async (providerId) => {
+  try {
+    const res = await axios.get(
+      `${Backend_URL}/api/bookings/provider/bookings/${providerId}`,
+      { withCredentials: true }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching provider bookings:", error);
+    throw error;
+  }
+};

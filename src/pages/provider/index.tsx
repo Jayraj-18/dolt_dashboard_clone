@@ -87,7 +87,7 @@ const ProviderDashboard = () => {
     const handleCompleteJob = async (jobId) => {
       try {
         setCompleteLoading(true);
-        await axios.put(`${Backend_URL}/api/bookings/${jobId}`, {
+        await axios.put(`${Backend_URL}/api/bookings/updateBooking/${jobId}`, {
           status: "completed",
         });
         alert("Job marked as completed ✅");

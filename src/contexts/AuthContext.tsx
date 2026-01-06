@@ -130,8 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoadingProviderBookings(true);
       const response = await axios.get(
-        `${Backend_URL}/api/bookings/getProviderbookings`,
-        { params: { providerId } }
+        `${Backend_URL}/api/bookings/provider/bookings/${providerId}`
       );
       if (response.data.success) {
         setProviderBookings(response.data.data);
@@ -154,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user_id: job.user_id,
       };
 
-      const res = await axios.put(`${Backend_URL}/api/bookings/${job.id}`, {
+      const res = await axios.put(`${Backend_URL}/api/bookings/updateBooking/${job.id}`, {
         providerDetails,
         status: "accepted",
         isBooked: true,
@@ -175,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const handleComplete = async (jobId: string, providerId: string) => {
     try {
       setLoading(true);
-      const res = await axios.put(`${Backend_URL}/api/bookings/${jobId}`, {
+      const res = await axios.put(`${Backend_URL}/api/bookings/updateBooking/${jobId}`, {
         status: "completed",
       });
 
