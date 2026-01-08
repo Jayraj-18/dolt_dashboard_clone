@@ -24,6 +24,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (!user) {
+  
     navigate('/');
     return null;
   }

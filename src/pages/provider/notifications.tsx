@@ -15,48 +15,7 @@ interface Notification {
 }
 
 const ProviderNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'job',
-      title: 'New Job Request',
-      message: 'John Doe requested your plumbing services for tomorrow at 10:00 AM',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-    },
-    {
-      id: '2',
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'You received $120.00 for pipe repair service completed',
-      timestamp: new Date(Date.now() - 7200000),
-      read: false,
-    },
-    {
-      id: '3',
-      type: 'message',
-      title: 'New Message',
-      message: 'Jane Smith sent you a message about scheduling',
-      timestamp: new Date(Date.now() - 86400000),
-      read: true,
-    },
-    {
-      id: '4',
-      type: 'review',
-      title: '5-Star Review',
-      message: 'Robert Brown left a 5-star review for your cleaning service',
-      timestamp: new Date(Date.now() - 172800000),
-      read: true,
-    },
-    {
-      id: '5',
-      type: 'job',
-      title: 'Job Completed',
-      message: 'Your job for David Johnson has been marked as completed',
-      timestamp: new Date(Date.now() - 259200000),
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 

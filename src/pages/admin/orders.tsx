@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { getProviderOrders } from '../../api/orders';
+import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
-import { mockOrders, mockProducts } from '../../lib/mockData';
 import {
   Table,
   TableBody,
@@ -15,12 +16,34 @@ import {
 import { Search, Eye, RotateCcw } from 'lucide-react';
 
 const OrdersManagement = () => {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered'>('all');
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        // Fetch all orders (no currentUserId => admin view)
+        const response = await getProviderOrders();
+        setOrders(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+        toast.error("Failed to load orders");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  // Filtering logic
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch =
+      order.id?.toLowerCase().includes(searchLower) ||
+      order.providerName?.toLowerCase().includes(searchLower) ||
+      order.username?.toLowerCase().includes(searchLower);
     const matchesFilter = filter === 'all' || order.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -28,7 +51,6 @@ const OrdersManagement = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-[#FF7A00] text-white';
       case 'processing':
         return 'bg-[#FF7A00] text-white';
       case 'shipped':
@@ -40,7 +62,8 @@ const OrdersManagement = () => {
     }
   };
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+  // Placeholder summary counts
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const pendingOrders = orders.filter((o) => o.status === 'pending').length;
   const deliveredOrders = orders.filter((o) => o.status === 'delivered').length;
 
@@ -56,31 +79,42 @@ const OrdersManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Orders
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">{orders.length}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pending
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-yellow-600">{pendingOrders}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Delivered</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Delivered
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-green-600">{deliveredOrders}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Revenue
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
@@ -130,6 +164,7 @@ const OrdersManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
+                  <TableHead>Provider Info</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
@@ -143,32 +178,33 @@ const OrdersManagement = () => {
                   filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
-                        <span className="font-semibold text-foreground">{order.id}</span>
+                        <span className="font-semibold text-foreground">{order.id.slice(0, 8).toUpperCase()}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">Customer #{order.userId.split('_')[1]}</TableCell>
                       <TableCell>
-                        <div className="space-y-1">
-                          {order.items.map((item, i) => {
-                            const product = mockProducts.find((p) => p.id === item.productId);
-                            return (
-                              <div key={i} className="text-sm text-foreground">
-                                {product?.name} × {item.quantity}
-                              </div>
-                            );
-                          })}
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">{order.providerName || "—"}</span>
+                          <span className="text-xs text-muted-foreground">{order.providerId ? order.providerId.slice(0, 8) : "—"}</span>
                         </div>
                       </TableCell>
+                      <TableCell className="text-muted-foreground">{order.username || order.details?.fullName || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {order.items?.length || 0}
+                      </TableCell>
                       <TableCell>
-                        <span className="font-semibold text-foreground">${order.total}</span>
+                        <span className="font-semibold text-foreground">
+                          ${(order.total_amount || 0).toFixed(2)}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1).replace('_', ' ')}
+                          {order.status
+                            ? order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1).replace('_', ' ')
+                            : 'Unknown'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {order.date.toLocaleDateString()}
+                        {order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">

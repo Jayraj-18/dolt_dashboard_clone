@@ -1,37 +1,78 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { mockBookings, mockProviders } from '../../lib/mockData';
 import { useData } from '../../contexts/DataContext';
 import { MessageSquare, MapPin, Calendar, DollarSign, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { updateBooking, getProviderBookings } from '../../api/AdminApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface JobUpdate {
   [key: string]: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 }
 
 const JobsList = () => {
-  const provider = mockProviders[0];
-  const providerJobs = mockBookings.filter((b) => b.providerId === provider.id);
   const { updateJobStatus } = useData();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [providerJobs, setProviderJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
-  const [jobStatuses, setJobStatuses] = useState<JobUpdate>({
-    bk_1: 'confirmed',
-    bk_2: 'pending',
-    bk_3: 'completed',
-    bk_4: 'in_progress',
-  });
+  const [jobStatuses, setJobStatuses] = useState<JobUpdate>({});
   const [processingJob, setProcessingJob] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (user && user.id) {
+        try {
+          setLoading(true);
+          const res = await getProviderBookings(user.id);
+          if (res.success) {
+            const mappedJobs = res.data.map((b: any) => ({
+              id: b.id,
+              customerName: b.user_name || "Unknown Customer",
+              address: b.address,
+              date: new Date(b.scheduled_date),
+              amount: b.total_amount,
+              // Map backend 'accepted' to 'confirmed' for frontend consistency if needed
+              status: b.isBooked && b.status === "pending" ? "confirmed" : (b.status === "accepted" ? "confirmed" : b.status),
+              serviceId: b.service_id,
+              notes: b.notes,
+              rating: b.rating,
+              review: b.review,
+              providerId: b.provider_id
+            }));
+            setProviderJobs(mappedJobs);
+
+            const initialStatuses: JobUpdate = {};
+            mappedJobs.forEach((j: any) => {
+              initialStatuses[j.id] = j.status;
+            });
+            setJobStatuses(initialStatuses);
+          }
+        } catch (err) {
+          console.error("Failed to fetch jobs", err);
+          toast.error("Failed to load jobs");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchJobs();
+  }, [user]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
         return 'bg-[#FF7A00] text-white';
       case 'confirmed':
+      case 'accepted':
         return 'bg-[#FF7A00] text-white';
       case 'in_progress':
         return 'bg-[#22C55E] text-white';
@@ -59,19 +100,40 @@ const JobsList = () => {
     setProcessingJob(jobId);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      // Real Backend Update
+      if (user && user.id) {
+        try {
+          // Map frontend 'confirmed' to backend 'accepted'
+          const backendStatus = newStatus === 'confirmed' ? 'accepted' : newStatus;
 
-      setJobStatuses((prev) => ({
-        ...prev,
-        [jobId]: newStatus,
-      }));
+          await updateBooking(jobId, {
+            status: backendStatus,
+            providerId: user.id
+          });
 
-      updateJobStatus(jobId, newStatus);
+          // If successful:
+          setJobStatuses((prev) => ({
+            ...prev,
+            [jobId]: newStatus,
+          }));
 
-      const statusText = newStatus === 'confirmed' ? 'accepted' : newStatus === 'in_progress' ? 'started' : 'completed';
-      toast.success(`Job ${statusText} successfully`);
+          updateJobStatus(jobId, newStatus);
+
+          const statusText = newStatus === 'confirmed' ? 'accepted' : newStatus === 'in_progress' ? 'started' : 'completed';
+          toast.success(`Job ${statusText} successfully`);
+
+        } catch (apiError: any) {
+          // Trap MP_REQUIRED error
+          if (apiError.response?.status === 403 && apiError.response?.data?.code === 'MP_REQUIRED') {
+            toast.error(apiError.response.data.message);
+            navigate('/provider/profile');
+            return; // Exit early
+          }
+          throw apiError; // Rethrow other errors
+        }
+      }
     } catch (error) {
+      console.error("Update failed", error);
       toast.error('Failed to update job status');
     } finally {
       setProcessingJob(null);
@@ -82,7 +144,12 @@ const JobsList = () => {
     setProcessingJob(jobId);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      // Implement real rejection call if API supports it, otherwise mock timeout for now or use CancelBooking
+      // Assuming updateBooking can handle 'cancelled' or similar
+      await updateBooking(jobId, {
+        status: 'cancelled',
+        providerId: user?.id
+      });
 
       setJobStatuses((prev) => ({
         ...prev,
@@ -98,7 +165,7 @@ const JobsList = () => {
     }
   };
 
-  const JobCard = ({ job }: { job: (typeof providerJobs)[0] }) => {
+  const JobCard = ({ job }: { job: any }) => { // Relaxed type for now
     const isExpanded = expandedJob === job.id;
     const currentStatus = jobStatuses[job.id] || job.status;
 
@@ -124,7 +191,7 @@ const JobsList = () => {
               <div className="grid grid-cols-3 gap-4 text-sm mt-3">
                 <div>
                   <p className="text-muted-foreground text-xs">Date & Time</p>
-                  <p className="font-medium text-foreground">{format(job.date, 'MMM d, h:mm a')}</p>
+                  <p className="font-medium text-foreground">{format(new Date(job.date), 'MMM d, h:mm a')}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Amount</p>
@@ -177,12 +244,11 @@ const JobsList = () => {
               <div>
                 <p className="text-xs text-muted-foreground uppercase font-semibold">Customer Info</p>
                 <p className="font-medium text-foreground mt-1">{job.customerName}</p>
-                <p className="text-sm text-muted-foreground">Customer ID: user_1</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase font-semibold">Service</p>
                 <p className="font-medium text-foreground mt-1">
-                  {job.serviceId === 'svc_1' ? 'General Cleaning' : 'Pipe Repair'}
+                  Service ID: {job.serviceId}
                 </p>
               </div>
               <div>
@@ -211,7 +277,7 @@ const JobsList = () => {
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Message Customer
               </Button>
-              {currentStatus === 'confirmed' && (
+              {(currentStatus === 'confirmed' || currentStatus === 'accepted') && (
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -247,7 +313,10 @@ const JobsList = () => {
   };
 
   const pendingJobs = providerJobs.filter((j) => (jobStatuses[j.id] || j.status) === 'pending');
-  const assignedJobs = providerJobs.filter((j) => (jobStatuses[j.id] || j.status) === 'confirmed');
+  const assignedJobs = providerJobs.filter((j) => {
+    const s = jobStatuses[j.id] || j.status;
+    return s === 'confirmed' || s === 'accepted';
+  });
   const inProgressJobs = providerJobs.filter((j) => (jobStatuses[j.id] || j.status) === 'in_progress');
   const completedJobs = providerJobs.filter((j) => (jobStatuses[j.id] || j.status) === 'completed');
 
@@ -259,83 +328,86 @@ const JobsList = () => {
         <p className="text-muted-foreground mt-1">Manage your bookings and track job progress</p>
       </div>
 
-      {/* Job Tabs */}
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending">
-            Pending ({pendingJobs.length})
-          </TabsTrigger>
-          <TabsTrigger value="assigned">
-            Assigned ({assignedJobs.length})
-          </TabsTrigger>
-          <TabsTrigger value="in-progress">
-            In Progress ({inProgressJobs.length})
-          </TabsTrigger>
-          <TabsTrigger value="completed">
-            Completed ({completedJobs.length})
-          </TabsTrigger>
-        </TabsList>
+      {loading ? (
+        <p>Loading jobs...</p>
+      ) : (
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="pending">
+              Pending ({pendingJobs.length})
+            </TabsTrigger>
+            <TabsTrigger value="assigned">
+              Assigned ({assignedJobs.length})
+            </TabsTrigger>
+            <TabsTrigger value="in-progress">
+              In Progress ({inProgressJobs.length})
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              Completed ({completedJobs.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="pending" className="space-y-4 mt-6">
-          {pendingJobs.length > 0 ? (
-            pendingJobs.map((job) => <JobCard key={job.id} job={job} />)
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground">No pending jobs</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+          <TabsContent value="pending" className="space-y-4 mt-6">
+            {pendingJobs.length > 0 ? (
+              pendingJobs.map((job) => <JobCard key={job.id} job={job} />)
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">No pending jobs</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        <TabsContent value="assigned" className="space-y-4 mt-6">
-          {assignedJobs.length > 0 ? (
-            assignedJobs.map((job) => (
-              <div key={job.id} onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}>
-                <JobCard job={job} />
-              </div>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground">No assigned jobs</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+          <TabsContent value="assigned" className="space-y-4 mt-6">
+            {assignedJobs.length > 0 ? (
+              assignedJobs.map((job) => (
+                <div key={job.id} onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}>
+                  <JobCard job={job} />
+                </div>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">No assigned jobs</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        <TabsContent value="in-progress" className="space-y-4 mt-6">
-          {inProgressJobs.length > 0 ? (
-            inProgressJobs.map((job) => (
-              <div key={job.id} onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}>
-                <JobCard job={job} />
-              </div>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground">No jobs in progress</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+          <TabsContent value="in-progress" className="space-y-4 mt-6">
+            {inProgressJobs.length > 0 ? (
+              inProgressJobs.map((job) => (
+                <div key={job.id} onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}>
+                  <JobCard job={job} />
+                </div>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">No jobs in progress</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        <TabsContent value="completed" className="space-y-4 mt-6">
-          {completedJobs.length > 0 ? (
-            completedJobs.map((job) => (
-              <div key={job.id} onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}>
-                <JobCard job={job} />
-              </div>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground">No completed jobs yet</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="completed" className="space-y-4 mt-6">
+            {completedJobs.length > 0 ? (
+              completedJobs.map((job) => (
+                <div key={job.id} onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}>
+                  <JobCard job={job} />
+                </div>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">No completed jobs yet</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 };

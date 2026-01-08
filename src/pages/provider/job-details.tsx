@@ -7,14 +7,31 @@ import { mockBookings } from '../../lib/mockData';
 import { ArrowLeft, MapPin, Calendar, Clock, DollarSign, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
+
+interface Job {
+  id: string;
+  status: string;
+  customerName: string;
+  address: string;
+  date: Date;
+  time: string;
+  amount: number;
+  notes?: string;
+  rating?: number;
+  review?: string;
+}
+
 const JobDetails = () => { const navigate = useNavigate();
   // Get first in-progress or confirmed job
-  const job = mockBookings.find((b) => ['in_progress', 'confirmed'].includes(b.status)) || mockBookings[0];
+const job: Job =
+  mockBookings.find((b: Job) =>
+    ['in_progress', 'confirmed'].includes(b.status)
+  ) || mockBookings[0];
   const [jobStatus, setJobStatus] = useState(job.status);
 
   const handleStatusChange = (newStatus: string) => {
     setJobStatus(newStatus);
-    console.log(`Job status updated to: ${newStatus}`);
+  
   };
 
   return (

@@ -6,7 +6,6 @@ import { Label } from '../../components/ui/label';
 import { Badge } from '../../components/ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { ImageUpload } from '../../components/ImageUpload';
-import { User, Mail, Phone, MapPin, Upload, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ProfileSettings = () => {
@@ -89,7 +88,7 @@ const ProfileSettings = () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 800));
       // Save to localStorage
-      localStorage.setItem('homeownerProfile', JSON.stringify(formData));
+      localStorage.setItem('userProfile', JSON.stringify(formData));
       toast.success('Profile saved successfully');
     } catch (error) {
       toast.error('Failed to save profile');

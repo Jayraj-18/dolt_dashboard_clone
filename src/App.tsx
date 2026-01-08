@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Toaster } from "@/components/ui/sonner";
 import { RouterProvider } from 'react-router-dom';
 import './index.css';
 import { router } from './routes';
@@ -11,7 +12,7 @@ const App = () => {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const shouldBeDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
-    
+
     if (shouldBeDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -24,6 +25,7 @@ const App = () => {
       <DataProvider>
         <div className="min-h-screen bg-background">
           <RouterProvider router={router} />
+          <Toaster />
         </div>
       </DataProvider>
     </AuthProvider>

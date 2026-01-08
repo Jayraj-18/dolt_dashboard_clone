@@ -40,19 +40,61 @@ export const ImageUpload = ({
   };
 
   const handleFileSelect = (file: File) => {
+    // Basic validation first
     if (!validateFile(file)) return;
 
     setIsLoading(true);
+
     const reader = new FileReader();
 
     reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setPreview(result);
-      onImageChange(result);
-      // Store in localStorage for persistence
-      localStorage.setItem('profileImage', result);
-      toast.success('Image uploaded successfully');
-      setIsLoading(false);
+      const img = new Image();
+      img.src = e.target?.result as string;
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Define max dimensions
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw compressed image
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Get compressed Base64 string (JPEG, 0.7 quality)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+        setPreview(compressedBase64);
+        onImageChange(compressedBase64);
+        localStorage.setItem('profileImage', compressedBase64);
+        toast.success('Image uploaded successfully');
+        setIsLoading(false);
+      };
+
+      img.onerror = () => {
+        toast.error('Failed to process image');
+        setIsLoading(false);
+      };
     };
 
     reader.onerror = () => {
@@ -129,11 +171,10 @@ export const ImageUpload = ({
 
       {/* Upload Area */}
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer ${
-          isDragging
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer ${isDragging
             ? 'border-primary bg-primary/5'
             : 'border-muted-foreground/30 hover:border-primary/50'
-        }`}
+          }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -161,14 +202,14 @@ export const ImageUpload = ({
       </div>
 
       {/* Alternative: Google OAuth Mock */}
-      <Button variant="outline" className="w-full" disabled={isLoading}>
+      {/* <Button variant="outline" className="w-full" disabled={isLoading}>
         <img
           src="https://www.gstatic.com/images/branding/product/1x/goog_logo_40dp.png"
           alt="Google"
           className="w-4 h-4 mr-2"
         />
         Connect Google (Mock)
-      </Button>
+      </Button> */}
     </div>
   );
 };

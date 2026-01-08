@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { mockPayments, mockBookings, mockProviders } from '../../lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useState,useEffect } from 'react';
+import axios from 'axios';
 import {
   LineChart,
   Line,
@@ -14,34 +15,57 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+
 import { DollarSign, TrendingUp, AlertCircle, Download } from 'lucide-react';
-import { format } from 'date-fns';
+
 
 const Earnings = () => {
-  const provider = mockProviders[0];
+  // Empty values for future backend data
+  const providerPayments = [];
+  const completedEarnings = 0;
+  const pendingEarnings = 0;
 
-  // Calculate earnings stats
-  const providerPayments = mockPayments.filter((p) => {
-    const booking = mockBookings.find((b) => b.id === p.bookingId);
-    return booking?.providerId === provider.id;
-  });
 
-  const completedEarnings = providerPayments
-    .filter((p) => p.status === 'completed')
-    .reduce((sum, p) => sum + p.amount, 0);
 
-  const pendingEarnings = providerPayments
-    .filter((p) => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0);
+  // Empty payout history
+  const payoutHistory = [];
+  const [providerBookings, setProviderBookings] = useState([]);
+const [totalEarnings, setTotalEarnings] = useState(0);
+const [completedJobs, setCompletedJobs] = useState(0);
+const [monthlyData, setMonthlyData] = useState([]);
 
-  const monthlyData = [
-    { month: 'Jan', earnings: 1200, jobs: 8 },
-    { month: 'Feb', earnings: 1500, jobs: 10 },
-    { month: 'Mar', earnings: 2200, jobs: 15 },
-    { month: 'Apr', earnings: 1800, jobs: 12 },
-    { month: 'May', earnings: 2500, jobs: 17 },
-    { month: 'Jun', earnings: 2800, jobs: 19 },
-  ];
+  const { user } = useAuth();
+  const Backend_URL =
+  import.meta.env.VITE_PUBLIC_BACKEND_URL 
+
+
+useEffect(() => {
+  if (!user?.id) return;
+
+  const fetchData = async () => {
+    try {
+      const res = await axios.post(`${Backend_URL}/api/provider/earnings`, {
+        providerId: user.id,
+      });
+
+      
+
+      setProviderBookings(res.data.bookings);
+      setTotalEarnings(res.data.totalEarnings);
+      setCompletedJobs(res.data.completedJobs);
+      setMonthlyData(res.data.monthlyData);
+
+
+    } catch (error) {
+      console.error("Error fetching provider bookings:", error);
+    }
+  };
+
+  fetchData();
+}, [user]);
+
+const latestMonth = monthlyData.length > 0 ? monthlyData[monthlyData.length - 1] : null;
+
 
   return (
     <div className="space-y-8">
@@ -53,6 +77,7 @@ const Earnings = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Earned */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Earned</CardTitle>
@@ -60,7 +85,7 @@ const Earnings = () => {
           <CardContent>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-3xl font-bold text-foreground">${completedEarnings}</p>
+                <p className="text-3xl font-bold text-foreground">${totalEarnings}</p>
                 <p className="text-xs text-muted-foreground mt-1">All-time</p>
               </div>
               <DollarSign className="w-8 h-8 text-success/40" />
@@ -68,6 +93,7 @@ const Earnings = () => {
           </CardContent>
         </Card>
 
+        {/* Pending */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Payouts</CardTitle>
@@ -83,6 +109,7 @@ const Earnings = () => {
           </CardContent>
         </Card>
 
+        {/* This Month */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
@@ -90,8 +117,8 @@ const Earnings = () => {
           <CardContent>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-3xl font-bold text-foreground">$2,800</p>
-                <p className="text-xs text-muted-foreground mt-1">19 completed jobs</p>
+              <p className="text-3xl font-bold text-foreground">{latestMonth ? latestMonth.earnings : 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">{completedJobs} completed jobs</p>
               </div>
               <TrendingUp className="w-8 h-8 text-accent/40" />
             </div>
@@ -103,7 +130,7 @@ const Earnings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Earnings Trend</CardTitle>
-          <CardDescription>Your earnings over the last 6 months</CardDescription>
+          <CardDescription>Your earnings over the last months</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -169,44 +196,9 @@ const Earnings = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[
-              {
-                id: 'payout_1',
-                amount: 2500,
-                date: new Date('2024-06-01'),
-                status: 'completed',
-                method: 'Bank Transfer',
-              },
-              {
-                id: 'payout_2',
-                amount: 2200,
-                date: new Date('2024-05-01'),
-                status: 'completed',
-                method: 'Bank Transfer',
-              },
-              {
-                id: 'payout_3',
-                amount: 1800,
-                date: new Date('2024-04-01'),
-                status: 'completed',
-                method: 'Bank Transfer',
-              },
-            ].map((payout) => (
-              <div key={payout.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground">{payout.method}</p>
-                    <p className="text-sm text-muted-foreground">{format(payout.date, 'MMM d, yyyy')}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-lg text-success">${payout.amount}</p>
-                    <Badge className="bg-success text-success-foreground">
-                      {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {payoutHistory.length === 0 && (
+              <p className="text-muted-foreground text-sm">No payout history available.</p>
+            )}
 
             {/* Pending Payout */}
             {pendingEarnings > 0 && (
@@ -217,7 +209,7 @@ const Earnings = () => {
                     <div>
                       <p className="font-semibold text-foreground">Pending Payout</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Your next payout will be processed on June 15th
+                        Your next payout will be processed soon
                       </p>
                     </div>
                   </div>
@@ -237,33 +229,18 @@ const Earnings = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="border border-border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-foreground">Bank Account</p>
-                <p className="text-sm text-muted-foreground mt-1">Wells Fargo - Checking</p>
-                <p className="text-xs text-muted-foreground mt-1">•••• •••• •••• 1234</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Change
-              </Button>
-            </div>
+            <p className="font-semibold text-foreground">Bank Account</p>
+            <p className="text-sm text-muted-foreground mt-1">No bank details added</p>
           </div>
 
           <div className="border border-border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-foreground">Payout Frequency</p>
-                <p className="text-sm text-muted-foreground mt-1">Monthly on the 1st</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Change
-              </Button>
-            </div>
+            <p className="font-semibold text-foreground">Payout Frequency</p>
+            <p className="text-sm text-muted-foreground mt-1">Not set</p>
           </div>
 
           <Button className="w-full">
             <Download className="w-4 h-4 mr-2" />
-            Download Tax Forms (1099)
+            Download Tax Forms
           </Button>
         </CardContent>
       </Card>

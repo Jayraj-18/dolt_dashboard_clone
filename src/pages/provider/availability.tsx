@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Label } from '../../components/ui/label';
 import { Input } from '../../components/ui/input';
 import { Calendar, Clock, Plus, Trash2 } from 'lucide-react';
-import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format } from 'date-fns';
 
 interface AvailabilityBlock {
   id: string;
@@ -17,12 +17,9 @@ interface AvailabilityBlock {
 
 const AvailabilityCalendar = () => {
   const today = new Date();
-  const [availability, setAvailability] = useState<AvailabilityBlock[]>([
-    { id: '1', date: today, startTime: '09:00', endTime: '17:00', isAvailable: true },
-    { id: '2', date: addDays(today, 1), startTime: '09:00', endTime: '17:00', isAvailable: true },
-    { id: '3', date: addDays(today, 2), startTime: '10:00', endTime: '15:00', isAvailable: true },
-    { id: '4', date: addDays(today, 3), startTime: '', endTime: '', isAvailable: false },
-  ]);
+
+  // ❌ Removed all dummy data
+  const [availability, setAvailability] = useState<AvailabilityBlock[]>([]);
 
   const [newDate, setNewDate] = useState('');
   const [newStartTime, setNewStartTime] = useState('09:00');
@@ -43,10 +40,6 @@ const AvailabilityCalendar = () => {
 
   const removeAvailability = (id: string) => {
     setAvailability(availability.filter((a) => a.id !== id));
-  };
-
-  const toggleAvailability = (id: string) => {
-    setAvailability(availability.map((a) => (a.id === id ? { ...a, isAvailable: !a.isAvailable } : a)));
   };
 
   const upcomingDates = availability.filter((a) => a.date >= today);
@@ -128,28 +121,22 @@ const AvailabilityCalendar = () => {
                         <p className="font-semibold text-foreground">
                           {format(slot.date, 'EEEE, MMMM d')}
                         </p>
-                        {slot.isAvailable ? (
-                          <div className="flex items-center gap-2 mt-1">
-                            <Clock className="w-4 h-4 text-muted-foreground" />
-                            <p className="text-sm text-muted-foreground">
-                              {slot.startTime} - {slot.endTime}
-                            </p>
-                          </div>
-                        ) : (
-                          <Badge variant="secondary" className="mt-1">
-                            Unavailable
-                          </Badge>
-                        )}
+
+                        <div className="flex items-center gap-2 mt-1">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            {slot.startTime} - {slot.endTime}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {slot.isAvailable && (
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                        Available
-                      </Badge>
-                    )}
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                      Available
+                    </Badge>
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -182,15 +169,11 @@ const AvailabilityCalendar = () => {
               <div key={day} className="flex items-center justify-between">
                 <span className="font-medium text-foreground">{day}</span>
                 <div className="flex items-center gap-2">
-                  <Input type="time" defaultValue={index < 5 ? '09:00' : '10:00'} className="w-24" />
+                  <Input type="time" defaultValue="09:00" className="w-24" />
                   <span className="text-muted-foreground">-</span>
-                  <Input type="time" defaultValue={index < 5 ? '17:00' : '16:00'} className="w-24" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-2"
-                  >
-                    {index >= 5 ? 'OFF' : 'EDIT'}
+                  <Input type="time" defaultValue="17:00" className="w-24" />
+                  <Button variant="ghost" size="sm" className="ml-2">
+                    EDIT
                   </Button>
                 </div>
               </div>
