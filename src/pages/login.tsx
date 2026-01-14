@@ -12,10 +12,14 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { UserRole } from "../types/auth";
-import { ArrowRight, Home, Wrench, Shield } from "lucide-react";
+import { ArrowRight, Home, Wrench, Shield, Eye, EyeOff } from "lucide-react";
+import { auth } from "../lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -29,13 +33,17 @@ const Login = () => {
     }
 
     try {
-      await login(email, selectedRole);
-      navigate(`/${selectedRole}`); // only runs if login succeeds
+      // 1. Firebase Login
+      console.log("🔵 [Frontend] Attempting Firebase Login with:", email);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
+
+      await login(idToken, selectedRole);
+
+      // Navigate based on role (or let AuthContext handle it if it did)
+      navigate(`/${selectedRole}`);
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        "Login failed. Please check your credentials.";
-      alert(message); // 👈 show backend error message
+      // ...
     }
   };
 
@@ -123,6 +131,35 @@ const Login = () => {
                     required
                     className="bg-input border-border text-white placeholder:text-muted-foreground"
                   />
+                </div>
+
+                {/* Password Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-white">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="bg-input border-border text-white placeholder:text-muted-foreground pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <Button

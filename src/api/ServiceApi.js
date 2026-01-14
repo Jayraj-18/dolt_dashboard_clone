@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const Backend_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL 
+const Backend_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 
 
@@ -8,7 +8,7 @@ export const addService = async (serviceData) => {
   try {
 
     const res = await axios.post(`${Backend_URL}/api/services/add`, serviceData);
-   
+
     return res.data;
   } catch (error) {
     console.error("Error adding service:", error);
@@ -19,7 +19,7 @@ export const addService = async (serviceData) => {
 export const getAllServices = async () => {
   try {
     const res = await axios.get(`${Backend_URL}/api/services/all`);
- 
+
     return res.data; // returns array of services
   } catch (error) {
     console.error("Error fetching services:", error);
@@ -47,4 +47,4 @@ export const deleteService = async (id) => {
     throw error;
   }
 };
-  
+

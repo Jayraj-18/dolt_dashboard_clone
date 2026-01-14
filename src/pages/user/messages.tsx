@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
@@ -12,28 +11,52 @@ import { Badge } from "../../components/ui/badge";
 import { Send, Search, MessageSquare } from "lucide-react";
 import { formatDistance } from "date-fns";
 import axios from "axios";
-import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "../../lib/firebase";
+import { collection, query, orderBy, onSnapshot, limit } from "firebase/firestore";
+
+interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: Date;
+  read: boolean;
+  senderName?: string;
+  senderAvatar?: string;
+}
+
+interface Provider {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  service_title: string;
+}
+
 const Messages = () => {
   // State
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
-  const [allMessages, setAllMessages] = useState([]);
-  const [providers, setProviders] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const { user } = useAuth();
   const userId = user?.id;
+  const scrollRef = useRef<HTMLDivElement>(null);
   const Backend_URL =
-    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
-  // Get messages for the selected conversation
-  const getConversationMessages = (conversationId) => {
-    return allMessages.filter(
-      (m) => m.senderId === conversationId || m.receiverId === conversationId
-    );
-  };
+  // Scroll to bottom
   useEffect(() => {
-    if (!userId) return; // wait until userId is available
- 
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // Fetch Potential Conversation Partners (Providers from Bookings)
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchConversations = async () => {
       try {
         const res = await axios.get(
@@ -42,39 +65,73 @@ const Messages = () => {
             params: { userId },
           }
         );
-    
+
         if (res.data.success) {
           setProviders(res.data.providers);
         }
-       
+
       } catch (err) {
         console.error("Error fetching conversations:", err);
       }
     };
 
     fetchConversations();
-  }, [userId]); // ✅ runs whenever userId changes
+  }, [userId]);
+
+  // Listen to Real-time Messages for Selected Conversation
+  useEffect(() => {
+    if (!selectedConversation || !userId) return;
+
+    const participants = [userId, selectedConversation].sort();
+    const conversationId = `${participants[0]}_${participants[1]}`;
+
+    const q = query(
+      collection(db, "conversations", conversationId, "messages"),
+      orderBy("createdAt", "asc"),
+      limit(100)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          senderId: data.senderId,
+          receiverId: data.receiverId,
+          content: data.content,
+          timestamp: data.createdAt?.toDate() || new Date(),
+          read: data.read || false,
+          // senderName and Avatar could be enriched here or on UI side
+          senderName: data.senderId === userId ? "You" : "Provider", // simplified
+        } as Message;
+      });
+      setMessages(msgs);
+    });
+
+    return () => unsubscribe();
+
+  }, [selectedConversation, userId]);
+
 
   // Send a new message
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (messageText.trim() && selectedConversation) {
-      const newMessage = {
-        id: `msg_${Date.now()}`,
-        senderId: "user_1",
+    if (!messageText.trim() || !selectedConversation || !userId) return;
+
+    try {
+      await axios.post(`${Backend_URL}/api/messages/send`, {
+        senderId: userId,
         receiverId: selectedConversation,
         content: messageText,
-        timestamp: new Date(),
-        read: false,
-        senderName: "You",
-        senderAvatar: "https://avatar.vercel.sh/you",
-      };
-      setAllMessages([...allMessages, newMessage]);
+        senderName: user?.name || "User" // Send user name for notification
+      });
+
       setMessageText("");
+    } catch (error) {
+      console.error("Failed to send message", error);
     }
   };
 
-  const conversationMessages = getConversationMessages(selectedConversation);
 
   return (
     <div className="space-y-8">
@@ -103,11 +160,10 @@ const Messages = () => {
                 <div
                   key={provider.id}
                   onClick={() => setSelectedConversation(provider.id)}
-                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedConversation === provider.id
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
+                  className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedConversation === provider.id
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <img
@@ -123,7 +179,7 @@ const Messages = () => {
                         {provider.email}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                         {provider.service_title}
+                        {provider.service_title}
                       </p>
                     </div>
                   </div>
@@ -172,30 +228,27 @@ const Messages = () => {
           </CardHeader>
 
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-            {conversationMessages.length > 0 ? (
-              conversationMessages.map((msg) => (
+            {messages.length > 0 ? (
+              messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 ${
-                    msg.senderId === "user_1" ? "flex-row-reverse" : ""
-                  }`}
+                  className={`flex gap-3 ${msg.senderId === userId ? "flex-row-reverse" : ""
+                    }`}
                 >
                   <img
-                    src={msg.senderAvatar}
+                    src={msg.senderId === userId ? (user?.avatar || "https://avatar.vercel.sh/you") : (providers.find(p => p.id === msg.senderId)?.avatar || "https://avatar.vercel.sh/provider")}
                     alt={msg.senderName}
                     className="w-8 h-8 rounded-full flex-shrink-0"
                   />
                   <div
-                    className={`flex-1 ${
-                      msg.senderId === "user_1" ? "flex flex-col items-end" : ""
-                    }`}
+                    className={`flex-1 ${msg.senderId === userId ? "flex flex-col items-end" : ""
+                      }`}
                   >
                     <div
-                      className={`px-4 py-2 rounded-lg max-w-xs ${
-                        msg.senderId === "user_1"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
+                      className={`px-4 py-2 rounded-lg max-w-xs ${msg.senderId === userId
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground"
+                        }`}
                     >
                       <p className="text-sm">{msg.content}</p>
                     </div>
@@ -214,6 +267,7 @@ const Messages = () => {
                 </p>
               </div>
             )}
+            <div ref={scrollRef} />
           </CardContent>
 
           {/* Input */}

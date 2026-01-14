@@ -1,13 +1,13 @@
 // ✅ api/ProductApi.js
 import axios from "axios";
-const Backend_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL 
+const Backend_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 
 export const addProduct = async (productData) => {
   try {
- 
+
     const res = await axios.post(`${Backend_URL}/api/products/add`, productData);
-   
+
     return res.data;
   } catch (error) {
     console.error("Error adding product:", error);
@@ -19,8 +19,8 @@ export const addProduct = async (productData) => {
 export const getAllProducts = async () => {
   try {
     const res = await axios.get(`${Backend_URL}/api/products/all`);
-    
-  return res.data?.data || [];
+
+    return res.data?.data || [];
   } catch (error) {
     console.error("Error fetching products:", error);
     throw error;

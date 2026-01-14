@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Bell, Check, Trash2 } from 'lucide-react';
+import { db } from '../../lib/firebase'; // Adjust path to firebase config
+import { useAuth } from '../../contexts/AuthContext';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, writeBatch, deleteDoc } from "firebase/firestore";
 
 interface Notification {
   id: string;
-  type: 'booking' | 'payment' | 'message' | 'system';
+  type: 'booking' | 'payment' | 'message' | 'system' | 'order';
   title: string;
   message: string;
   timestamp: Date;
@@ -15,6 +18,7 @@ interface Notification {
 }
 
 const Notifications = () => {
+  const { user } = useAuth(); // Assuming AuthContext is available
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
@@ -22,18 +26,49 @@ const Notifications = () => {
   const displayNotifications =
     activeTab === 'unread' ? notifications.filter((n) => !n.read) : notifications;
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+  // Real-time listener for notifications
+  useEffect(() => {
+    if (!user || !user.id) return;
+
+    const q = query(
+      collection(db, 'notifications'),
+      where('recipientId', '==', user.id),
+      orderBy('createdAt', 'desc')
     );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newNotifications = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().createdAt?.toDate() || new Date(),
+      })) as Notification[];
+      setNotifications(newNotifications);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const markAsRead = async (id: string) => {
+    try {
+      const notifRef = doc(db, 'notifications', id);
+      await updateDoc(notifRef, { read: true });
+    } catch (err) {
+      console.error("Error marking read:", err);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    // Batch update
+    const batch = writeBatch(db);
+    notifications.filter(n => !n.read).forEach((n) => {
+      const ref = doc(db, 'notifications', n.id);
+      batch.update(ref, { read: true });
+    });
+    await batch.commit();
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const deleteNotification = async (id: string) => {
+    await deleteDoc(doc(db, 'notifications', id));
   };
 
   const getTypeColor = (type: string) => {
@@ -46,6 +81,8 @@ const Notifications = () => {
         return 'bg-[#FF7A00] text-white';
       case 'system':
         return 'bg-[#A0A0A0] text-white';
+      case 'order':
+        return 'bg-[#3b82f6] text-white';
       default:
         return 'bg-[#A0A0A0] text-white';
     }
@@ -61,6 +98,8 @@ const Notifications = () => {
         return '💬';
       case 'system':
         return '🔔';
+      case 'order':
+        return '📦';
       default:
         return '📢';
     }
@@ -120,9 +159,8 @@ const Notifications = () => {
             displayNotifications.map((notification) => (
               <Card
                 key={notification.id}
-                className={`transition-colors ${
-                  !notification.read ? 'border-primary/50 bg-primary/5' : ''
-                }`}
+                className={`transition-colors ${!notification.read ? 'border-primary/50 bg-primary/5' : ''
+                  }`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">

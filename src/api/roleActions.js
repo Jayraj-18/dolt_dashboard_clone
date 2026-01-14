@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const Backend_URL =
-  import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+  import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
- 
+
 // 🔹 Become a Provider
 export const becomeProvider = async (userId) => {
   try {

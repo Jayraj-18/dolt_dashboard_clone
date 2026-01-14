@@ -53,29 +53,29 @@ const BookService = () => {
     notes: "",
   });
 
-const getMinTime = () => {
-  if (!formData.date) return "";
+  const getMinTime = () => {
+    if (!formData.date) return "";
 
-  const today = new Date();
-  const selectedDate = new Date(formData.date);
+    const today = new Date();
+    const selectedDate = new Date(formData.date);
 
-  if (selectedDate.toDateString() === today.toDateString()) {
-    // Format current time as HH:MM
-    const hours = String(today.getHours()).padStart(2, "0");
-    const minutes = String(today.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes}`;
-  }
+    if (selectedDate.toDateString() === today.toDateString()) {
+      // Format current time as HH:MM
+      const hours = String(today.getHours()).padStart(2, "0");
+      const minutes = String(today.getMinutes()).padStart(2, "0");
+      return `${hours}:${minutes}`;
+    }
 
-  return "00:00";
-};
+    return "00:00";
+  };
 
-const handleTimeChange = (time: string) => {
-  if (time < getMinTime()) {
-    alert("Select a valid time");
-    return;
-  }
-  handleFormChange("time", time);
-};
+  const handleTimeChange = (time: string) => {
+    if (time < getMinTime()) {
+      alert("Select a valid time");
+      return;
+    }
+    handleFormChange("time", time);
+  };
 
 
 
@@ -102,7 +102,7 @@ const handleTimeChange = (time: string) => {
     : null;
 
   const BACKEND_URL =
-    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   // Validate Form
   const validateForm = (): boolean => {
@@ -321,7 +321,7 @@ const handleTimeChange = (time: string) => {
                   value={formData.date}
                   onChange={(e) => handleFormChange("date", e.target.value)}
                   className={errors.date ? "border-destructive" : ""}
-                   min={new Date().toISOString().split("T")[0]}
+                  min={new Date().toISOString().split("T")[0]}
 
                 />
                 {errors.date && (
@@ -334,8 +334,8 @@ const handleTimeChange = (time: string) => {
                   id="time"
                   type="time"
                   value={formData.time}
-                 min={getMinTime()}
-          onChange={(e) => handleTimeChange(e.target.value)}
+                  min={getMinTime()}
+                  onChange={(e) => handleTimeChange(e.target.value)}
                   className={errors.time ? "border-destructive" : ""}
                 />
                 {errors.time && (

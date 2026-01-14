@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Index from './pages/index';
 import Login from './pages/login';
 import NotFound from './pages/NotFound';
+import RoleSelection from './pages/select-role'; // ✅ New
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -58,6 +59,11 @@ const routes = [
   //   path: '/login',
   //   element: <Login />,
   // },
+
+  {
+    path: '/select-role',
+    element: <RoleSelection />,
+  },
 
   // user Dashboard
   {

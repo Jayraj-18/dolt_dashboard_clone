@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types/auth';
 
@@ -24,14 +24,23 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (!user) {
-  
+
     navigate('/');
     return null;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    navigate('/');
-    return null;
+    // If user has the capability for the role but isn't currently switched to it, send to selection
+    if (
+      (allowedRoles.includes('provider') && user.isAlsoProvider) ||
+      (allowedRoles.includes('user') && user.isAlsoUser)
+    ) {
+      // Prevent infinite loop if we are already at select-role (though select-role shouldn't have specific allowedRoles usually, or just 'any')
+      return <Navigate to="/select-role" replace />;
+    }
+
+    // Otherwise, truly unauthorized for this route
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

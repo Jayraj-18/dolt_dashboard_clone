@@ -24,23 +24,23 @@ const ProviderMessages = () => {
   const [messageInput, setMessageInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-   
+
   const providerId = user?.id;
 
 
 
-    const Backend_URL =
-    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+  const Backend_URL =
+    import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   // 🧩 Fetch users with accepted/completed bookings
   useEffect(() => {
-       if (!providerId) return;
+    if (!providerId) return;
     const fetchConversations = async () => {
 
       try {
-        const res = await axios.get(`${Backend_URL}/api/messages/User-conversations`,{
+        const res = await axios.get(`${Backend_URL}/api/messages/User-conversations`, {
           params: { providerId },
-          
+
         });
         if (res.data.success) {
           setUsers(res.data.users);
@@ -99,11 +99,10 @@ const ProviderMessages = () => {
                 <div
                   key={user.id}
                   onClick={() => setSelectedChat(user.id)}
-                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedChat === user.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted border border-border'
-                  }`}
+                  className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedChat === user.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-muted border border-border'
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />

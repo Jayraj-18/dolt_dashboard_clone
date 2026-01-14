@@ -25,10 +25,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [loading, setLoading] = useState(false);
 
-  const Backend_URL =
-    import.meta.env.VITE_PUBLIC_BACKEND_URL
+  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-  const MAIN_URL = import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL
+  // Use env var or default to localhost
+  const Backend_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
+  const MAIN_URL = isLocalhost ? "http://localhost:3000" : (import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL || "http://localhost:3000");
+
+  // // console.log("---------------- DEBUG AUTH CONTEXT ----------------");
+  // // console.log("Hostname:", window.location.hostname);
+  // // console.log("isLocalhost:", isLocalhost);
+  // // console.log("Resolved MAIN_URL:", MAIN_URL);
+  // // console.log("Env MAIN_URL:", import.meta.env.VITE_PUBLIC_FRONTEND_MAIN_URL);
+  // // console.log("----------------------------------------------------");
+
 
 
   // ✅ Verify user session when app loads
@@ -39,27 +48,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const res = await axios.get(`${Backend_URL}/api/auth/verify`, {
           withCredentials: true,
         });
-        console.log(res.data)
-
-        setUser(res.data?.user || null);
-
+        if (res.data?.user) {
+          setUser(res.data.user);
+        } else {
+          setUser(null);
+        }
       } catch (err) {
-        console.error("Failed to fetch user:", err);
+        console.error("Failed to verify session:", err);
         setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
     fetchUser();
-  }, []);
+  }, [Backend_URL]);
 
-  // ✅ Login
-  const login = async (email: string, role: UserRole) => {
+  // ✅ Login with Firebase ID Token
+  const login = async (idToken: string, role?: UserRole) => {
     setIsLoading(true);
     try {
       const res = await axios.post(
-        `${Backend_URL}/api/auth/login`,
-        { email, role },
+        `${Backend_URL}/api/auth/login-firebase`,
+        { idToken, role },
         { withCredentials: true }
       );
       const user = res.data.user;
@@ -73,6 +83,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ✅ Logout
+  const logout = async () => {
+    try {
+      await axios.post(
+        `${Backend_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    }
+    setUser(null);
+    localStorage.removeItem("currentUser");
+
+    // Force runtime check for localhost to avoid any environment variable or closure staleness
+    const isLocalhostRuntime = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const targetUrl = isLocalhostRuntime ? "http://localhost:3000/login" : `${MAIN_URL}/login`;
+
+    // console.log("Redirecting logout to:", targetUrl);
+    window.location.href = targetUrl;
   };
 
   // ✅ Fetch user’s bookings
@@ -190,22 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // ✅ Logout
-  const logout = async () => {
-    try {
-      await axios.post(
-        `${Backend_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true } // required for cookie removal
-      );
-    } catch (err) {
-      console.error("Logout request failed:", err);
-    }
 
-    setUser(null);
-    localStorage.removeItem("currentUser");
-    window.location.href = `${MAIN_URL}/login`;
-  };
 
 
   // ✅ Switch role (for testing multi-role access)
@@ -221,10 +238,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
-        login,
         setUser,
-        logout,
-        // switchRole,
         loading,
         isLoading,
         bookings,
@@ -236,7 +250,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loadingProviderBookings,
 
         fetchBookingsProviders,
-        handleComplete
+        handleComplete,
+        login,
+        logout
       }}
     >
       {children}

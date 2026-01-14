@@ -17,7 +17,7 @@ const PaymentPage = () => {
     const [paymentResult, setPaymentResult] = useState<any>(null);
     const [showMPBrick, setShowMPBrick] = useState(false);
 
-    const BACKEND_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+    const BACKEND_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
     useEffect(() => {
         // Initialize Mercado Pago

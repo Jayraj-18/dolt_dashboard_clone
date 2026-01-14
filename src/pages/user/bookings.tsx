@@ -30,19 +30,19 @@ const Bookings = () => {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // ✅ Format date safely
-// Format Firestore Timestamp
-const formatDate = (timestamp: any) => {
-  if (!timestamp?._seconds) return "—";
+  // Format Firestore Timestamp
+  const formatDate = (timestamp: any) => {
+    if (!timestamp?._seconds) return "—";
 
-  const date = new Date(timestamp._seconds * 1000);
-  return date.toLocaleString("en-IN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+    const date = new Date(timestamp._seconds * 1000);
+    return date.toLocaleString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
 
   // ✅ Status badge colors
@@ -69,7 +69,7 @@ const formatDate = (timestamp: any) => {
   }, [user]);
 
   const [searchParams] = useSearchParams();
-  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://api.d0lt.local:5000";
+  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   // Handle Post-Payment Booking Creation
   useEffect(() => {
@@ -129,7 +129,7 @@ const formatDate = (timestamp: any) => {
 
 
 
-  
+
   // ✅ Cancel booking handler
   const handleCancelBooking = async (bookingId: string) => {
     setCanceling(bookingId);
@@ -202,9 +202,9 @@ const formatDate = (timestamp: any) => {
             key={stat.key}
             onClick={() => setActiveFilter(stat.key)}
             className={`cursor-pointer transition-all duration-200 ${activeFilter === stat.key
-                ? "ring-2 ring-primary"
-                : "hover:ring-1 hover:ring-muted-foreground"
-            }`}
+              ? "ring-2 ring-primary"
+              : "hover:ring-1 hover:ring-muted-foreground"
+              }`}
           >
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">

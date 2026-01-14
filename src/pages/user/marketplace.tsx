@@ -52,7 +52,7 @@ const Marketplace = () => {
       return;
     }
 
-    addToCart(productId, 1, price);
+    addToCart(productId, 1, price, product?.stock || 0);
     toast.success(`Added ${product?.name} to cart`);
   };
 
@@ -71,7 +71,7 @@ const Marketplace = () => {
   };
 
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = cartItems.length; // ✅ Show unique products count
 
   if (loading) {
     return <div className="p-8 text-center">Loading products...</div>;

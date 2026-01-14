@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface CartItem {
   productId: string;
   quantity: number;
   price: number;
+  stock: number; // ✅ Added stock
 }
 
 export interface BookingRequest {
@@ -27,16 +29,16 @@ export interface JobUpdate {
 interface DataContextType {
   // Cart
   cartItems: CartItem[];
-  addToCart: (productId: string, quantity: number, price: number) => void;
+  addToCart: (productId: string, quantity: number, price: number, stock: number) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  
+
   // Bookings
   bookings: BookingRequest[];
   addBooking: (booking: BookingRequest) => void;
   cancelBooking: (bookingId: string) => void;
-  
+
   // Jobs
   jobUpdates: JobUpdate[];
   updateJobStatus: (jobId: string, status: JobUpdate['status']) => void;
@@ -45,25 +47,37 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const saved = sessionStorage.getItem('cartItems');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { user } = useAuth();
 
-  const [bookings, setBookings] = useState<BookingRequest[]>(() => {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [bookings, setBookings] = useState<BookingRequest[]>([]);
+  const [jobUpdates, setJobUpdates] = useState<JobUpdate[]>([]);
+
+  // Load cart when user changes
+  useEffect(() => {
+    const key = user?.id ? `cartItems_${user.id}` : 'cartItems_guest';
+    const saved = sessionStorage.getItem(key);
+    setCartItems(saved ? JSON.parse(saved) : []);
+  }, [user?.id]);
+
+  // Load bookings
+  useEffect(() => {
     const saved = sessionStorage.getItem('bookings');
-    return saved ? JSON.parse(saved) : [];
-  });
+    setBookings(saved ? JSON.parse(saved) : []);
+  }, []);
 
-  const [jobUpdates, setJobUpdates] = useState<JobUpdate[]>(() => {
+  // Load job updates
+  useEffect(() => {
     const saved = sessionStorage.getItem('jobUpdates');
-    return saved ? JSON.parse(saved) : [];
-  });
+    setJobUpdates(saved ? JSON.parse(saved) : []);
+  }, []);
+
 
   // Persist cart to sessionStorage
   useEffect(() => {
-    sessionStorage.setItem('cartItems', JSON.stringify(cartItems));
-  }, [cartItems]);
+    const key = user?.id ? `cartItems_${user.id}` : 'cartItems_guest';
+    sessionStorage.setItem(key, JSON.stringify(cartItems));
+  }, [cartItems, user?.id]);
 
   // Persist bookings to sessionStorage
   useEffect(() => {
@@ -75,17 +89,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.setItem('jobUpdates', JSON.stringify(jobUpdates));
   }, [jobUpdates]);
 
-  const addToCart = (productId: string, quantity: number, price: number) => {
+  const addToCart = (productId: string, quantity: number, price: number, stock: number) => {
     setCartItems((prev) => {
       const existing = prev.find((item) => item.productId === productId);
       if (existing) {
+        if (existing.quantity + quantity > stock) {
+          // Cap at stock limit
+          return prev.map((item) =>
+            item.productId === productId
+              ? { ...item, quantity: stock, stock }
+              : item
+          );
+        }
         return prev.map((item) =>
           item.productId === productId
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantity, stock }
             : item
         );
       }
-      return [...prev, { productId, quantity, price }];
+      return [...prev, { productId, quantity, price, stock }];
     });
   };
 
@@ -99,9 +121,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     setCartItems((prev) =>
-      prev.map((item) =>
-        item.productId === productId ? { ...item, quantity } : item
-      )
+      prev.map((item) => {
+        if (item.productId === productId) {
+          const limit = item.stock || 9999;
+          if (quantity > limit) {
+            return { ...item, quantity: limit };
+          }
+          return { ...item, quantity };
+        }
+        return item;
+      })
     );
   };
 

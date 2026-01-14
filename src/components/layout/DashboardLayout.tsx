@@ -69,11 +69,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   if (!user) return <div>Loading...</div>; // wait until user is loaded
 
   if (!user) {
-
     return null;
   }
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = cartItems.length; // ✅ Show unique products count
 
   const getNavItems = (): NavItem[] => {
     const baseItems: NavItem[] = [
@@ -153,15 +152,15 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       isActive={isActive(item.href)}
                       onClick={() => navigate(item.href)}
                       className={`relative transition-all duration-200 ${isActive(item.href)
-                          ? "bg-accent/20 text-accent border-l-2 border-accent"
-                          : "text-sidebar-foreground hover:bg-accent/10 hover:text-accent"
+                        ? "bg-accent/20 text-accent border-l-2 border-accent"
+                        : "text-sidebar-foreground hover:bg-accent/10 hover:text-accent"
                         }`}
                     >
                       <button className="flex items-center gap-2 w-full">
                         <item.icon
                           className={`w-4 h-4 transition-colors ${isActive(item.href)
-                              ? "text-accent"
-                              : "text-sidebar-foreground"
+                            ? "text-accent"
+                            : "text-sidebar-foreground"
                             }`}
                         />
                         <span>{item.label}</span>
