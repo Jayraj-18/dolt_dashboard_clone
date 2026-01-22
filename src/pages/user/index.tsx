@@ -203,9 +203,9 @@ const UserDashboard = () => {
                           <p className="font-medium text-white">
                             {booking.scheduled_date
                               ? format(
-                                  new Date(booking.scheduled_date),
-                                  "MMM d, h:mm a"
-                                )
+                                new Date(booking.scheduled_date),
+                                "MMM d, h:mm a"
+                              )
                               : "Not scheduled"}
                           </p>
                         </div>

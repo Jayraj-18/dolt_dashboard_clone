@@ -4,13 +4,13 @@ import { getFirestore } from 'firebase/firestore';
 
 // Use same config as Landing Page
 const firebaseConfig = {
-    apiKey: "AIzaSyBE51mEHvRTk18OnF2DaiU9W1agQ4MQXPc",
-    authDomain: "dolt-dc182.firebaseapp.com",
-    projectId: "dolt-dc182",
-    storageBucket: "dolt-dc182.firebasestorage.app",
-    messagingSenderId: "445404899981",
-    appId: "1:445404899981:web:a1d6562bf39c81cc3d90c4",
-    measurementId: "G-32XJXRWD44"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
