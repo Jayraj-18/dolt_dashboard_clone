@@ -22,6 +22,7 @@ import { Search, Filter, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllServices } from "../../api/ServiceApi.js";
+import { calculateFees } from "../../lib/feeCalculator";
 
 // Types
 interface FormData {
@@ -387,9 +388,23 @@ const BookService = () => {
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span>Price:</span>
+                  <span>Base Price:</span>
                   <span className="font-medium">
                     ${selectedServiceData.basePrice}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>DOLT Fee (2.05%):</span>
+                  <span>
+                    ${calculateFees(selectedServiceData.basePrice).doltFee.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Marketplace Charge (5%):</span>
+                  <span>
+                    ${calculateFees(selectedServiceData.basePrice).marketplaceCharge.toFixed(2)}
                   </span>
                 </div>
 
@@ -401,7 +416,7 @@ const BookService = () => {
                 <div className="flex justify-between text-sm border-t border-border pt-2 mt-2">
                   <span className="font-medium">Total:</span>
                   <span className="font-bold text-primary">
-                    ${selectedServiceData.basePrice}
+                    ${calculateFees(selectedServiceData.basePrice).finalAmount.toFixed(2)}
                   </span>
                 </div>
               </div>

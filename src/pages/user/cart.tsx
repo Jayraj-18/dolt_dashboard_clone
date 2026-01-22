@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { createOrder } from '../../api/orders';
 import { useAuth } from '../../contexts/AuthContext';
 import { getProducts, ProductData } from '../../api/products';
+import { calculateFees } from '../../lib/feeCalculator';
 
 const ShoppingCart = () => {
   const navigate = useNavigate();
@@ -285,9 +286,13 @@ const ShoppingCart = () => {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium text-foreground">${subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax (8%)</span>
-                    <span className="font-medium text-foreground">${tax.toFixed(2)}</span>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">DOLT Fee (2.05%)</span>
+                    <span className="text-foreground">${calculateFees(subtotal).doltFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Marketplace Charge (5%)</span>
+                    <span className="text-foreground">${calculateFees(subtotal).marketplaceCharge.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
@@ -303,7 +308,7 @@ const ShoppingCart = () => {
 
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-primary">${total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-primary">${(calculateFees(subtotal).finalAmount + shipping).toFixed(2)}</span>
                 </div>
 
                 <div className="pt-4 space-y-2">

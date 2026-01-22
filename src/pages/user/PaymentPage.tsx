@@ -5,6 +5,7 @@ import { Loader2, CreditCard, Wallet, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import CardPaymentBrick from "../../components/payments/MercadoPagoBrick";
+import { calculateFees } from "../../lib/feeCalculator";
 
 const MP_PUBLIC_KEY = import.meta.env.VITE_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
 
@@ -96,8 +97,30 @@ const PaymentPage = () => {
                             <CardDescription>Order #{bookingId}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold mb-2">${amount.toFixed(2)}</div>
-                            <p className="text-muted-foreground">{booking?.service_title || "Service Payment"}</p>
+                            <div className="space-y-2 text-sm mb-4">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Service:</span>
+                                    <span className="font-medium">{booking?.service_title || "Service Payment"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Base Price:</span>
+                                    <span className="font-medium">${amount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-muted-foreground">DOLT Fee (2.05%):</span>
+                                    <span>${calculateFees(amount).doltFee.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-muted-foreground">Marketplace Charge (5%):</span>
+                                    <span>${calculateFees(amount).marketplaceCharge.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div className="border-t pt-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-bold">Total:</span>
+                                    <div className="text-2xl font-bold">${calculateFees(amount).finalAmount.toFixed(2)}</div>
+                                </div>
+                            </div>
                             <div className="mt-4 pt-4 border-t text-sm text-neutral-500">
                                 <p>{booking?.service_description || "Includes all taxes and fees."}</p>
                             </div>
