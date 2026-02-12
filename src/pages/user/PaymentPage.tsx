@@ -27,19 +27,11 @@ const PaymentPage = () => {
             setIsLoading(false);
         }
 
-        // Fetch Booking or Order Group Data
+        // Fetch Booking Data
         const fetchBooking = async () => {
             try {
                 if (!bookingId) return;
-
-                let endpoint = `${BACKEND_URL}/api/bookings/${bookingId}`;
-
-                // Check if it's an Order Group
-                if (bookingId.startsWith("ORDER-")) {
-                    endpoint = `${BACKEND_URL}/api/orders/group/${bookingId}`;
-                }
-
-                const res = await fetch(endpoint);
+                const res = await fetch(`${BACKEND_URL}/api/bookings/getBooking/${bookingId}`);
 
                 if (res.ok) {
                     const data = await res.json();
@@ -47,21 +39,20 @@ const PaymentPage = () => {
                     if (data.success) {
                         setBooking(data.data);
                     } else {
-                        console.error("Fetch unsuccessful:", data.message);
+                        console.error("Booking fetch unsuccessful:", data.message);
                     }
                 } else {
-                    console.error("Fetch failed status:", res.status);
+                    console.error("Booking fetch failed status:", res.status);
                 }
             } catch (e) {
-                console.error("Failed to fetch data:", e);
+                console.error("Failed to fetch booking:", e);
             }
         };
         fetchBooking();
     }, [bookingId, navigate]);
 
     console.log("Render Booking State:", booking);
-    // Fallback to 100 if amount is 0 or invalid, to prevent MP errors during testing
-    const amount = booking && Number(booking.total_amount) > 0 ? Number(booking.total_amount) : 100;
+    const amount = booking ? Number(booking.total_amount || 0) : 0;
 
     const handlePaymentResult = (result: any) => {
         setPaymentResult(result);
